@@ -1,6 +1,8 @@
 # caco
 
-Generator based control flow for Node.js. Supports both callbacks and promises.
+Generator based control flow that supports both callbacks and promises.
+
+[![Build Status](https://travis-ci.org/cshum/caco.svg?branch=master)](https://travis-ci.org/cshum/caco)
 
 Many of the existing async libraries require wrapping callback functions into promises to be usuable, which creates unnecessary complication. 
 
