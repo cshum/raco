@@ -6,8 +6,8 @@ Generator based control flow that supports both callbacks and promises.
 
 Many of the existing async libraries require wrapping callback functions into promises to be usuable, which creates unnecessary complication. 
 
-In caco, both callbacks and promises are 'yieldable'; 
-resulting function can be used by both callbacks and promises. 
+In caco, both callbacks and promises are 'yieldable'. 
+Resulting function can be used by both callbacks and promises. 
 This enables a powerful control flow while maintaining compatibility.
 
 ```bash
@@ -32,9 +32,10 @@ var fn = caco(function * (next) {
   return data
 })
 
-// consume with callback
+// Use with callback
 fn(function (err, res) { })
 
+// Use with promise
 fn().then(...).catch(...)
 ```
 
