@@ -1,3 +1,11 @@
+var isGeneratorFunction = require('is-generator-function')
+var isGenerator = function (val) {
+  return val && typeof val.next === 'function' && typeof val.throw === 'function'
+}
+var isPromise = function (val) {
+  return val && typeof val.then === 'function'
+}
+
 module.exports = function caco (gen) {
   return function () {
     var args = Array.prototype.slice.call(arguments)
@@ -5,13 +13,11 @@ module.exports = function caco (gen) {
     var callback
     if (typeof args[args.length - 1] === 'function') callback = args.pop()
 
-    args.push(function next (err, res) {
-      process.nextTick(function () {
-        step(err, res)
-      })
-    })
+    args.push(next)
 
-    var iter = gen.apply(self, args)
+    var iter
+    if (isGeneratorFunction(gen)) iter = gen.apply(self, args)
+    else if (isGenerator(gen)) iter = gen
 
     function step (err, res) {
       if (!iter) return callback.apply(self, arguments)
@@ -20,13 +26,15 @@ module.exports = function caco (gen) {
         var state = err ? iter.throw(err) : iter.next(res)
         if (state.done) iter = null
 
-        if (state.value && typeof state.value.then === 'function') {
+        if (isPromise(state.value)) {
           // handle thenable
           state.value.then(function (value) {
             step(null, value)
           }, function (err) {
             step(err || true)
           })
+        } else if (isGenerator(state.value)) {
+          caco(state.value)(next)
         } else if (state.done) {
           step(null, state.value)
         }
@@ -34,6 +42,12 @@ module.exports = function caco (gen) {
         // catch err, break iteration
         return callback.call(self, err)
       }
+    }
+
+    function next (err, res) {
+      process.nextTick(function () {
+        step(err, res)
+      })
     }
 
     if (callback) {

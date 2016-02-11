@@ -3,15 +3,15 @@ var caco = require('./')
 
 test('caco', function (t) {
   t.plan(3)
-  var v = caco(function * () {
-    return 167
-  })
+  function * v (n) {
+    return yield Promise.resolve(n)
+  }
   var v1 = caco(function * (next) {
     yield setTimeout(next, 0)
     return 1044
   })
   var v2 = caco(function * () {
-    return yield v()
+    return yield v(167)
   })
   var f = caco(function * (str, next) {
     var n = (yield v1()) / 2 + (yield v2(next))
