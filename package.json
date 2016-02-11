@@ -1,7 +1,7 @@
 {
   "name": "caco",
   "version": "0.0.2",
-  "description": "Generator based control flow that supports both callback and promise.",
+  "description": "Generator based control flow that supports callbacks and promises.",
   "scripts": {
     "test": "standard && node test.js"
   },
