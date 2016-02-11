@@ -1,4 +1,3 @@
-var isGeneratorFunction = require('is-generator-function')
 var isGenerator = function (val) {
   return val && typeof val.next === 'function' && typeof val.throw === 'function'
 }
@@ -15,9 +14,7 @@ module.exports = function caco (gen) {
 
     args.push(next)
 
-    var iter
-    if (isGeneratorFunction(gen)) iter = gen.apply(self, args)
-    else if (isGenerator(gen)) iter = gen
+    var iter = isGenerator(gen) ? gen : gen.apply(self, args)
 
     function step (err, res) {
       if (!iter) return callback.apply(self, arguments)
