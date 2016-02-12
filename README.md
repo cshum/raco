@@ -4,7 +4,7 @@ Generator based control flow that supports both callbacks and promises.
 
 [![Build Status](https://travis-ci.org/cshum/caco.svg?branch=master)](https://travis-ci.org/cshum/caco)
 
-Many of the existing async libraries require wrapping callback functions into promises to be usuable, which creates unnecessary complication. 
+Many existing flow-control libraries such as [co](https://github.com/tj/co), require wrapping callback functions into promises to be usable, which creates unnecessary complication. 
 
 In caco, both callbacks and promises are 'yieldable'. 
 Resulting function can be used by both callbacks and promises. 
@@ -18,7 +18,6 @@ npm install caco
 var caco = require('caco')
 
 var fn = caco(function * (next) {
-  // try/catch errors
   try {
     yield Promise.reject('boom') // yield promise reject throws error
   } catch (err) {
@@ -59,7 +58,6 @@ getN(123, function (err, val) {
 getN(123).then(function (val) {
   console.log(val) // 123
 })
-
 getN(689).catch(function (err) {
   console.log(err) // boom
 })
