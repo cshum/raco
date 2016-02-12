@@ -24,13 +24,13 @@ var fn = caco(function * (next) {
   } catch (err) {
     console.log(err) // 'boom'
   }
+
   var foo = yield Promise.resolve('bar') // yield promise
 
   yield setTimeout(next, 1000) // yield callback using 'next' argument, delay 1 second
 
   // yield callback of form next(err, data): return data, throw if err exists
   var data = yield fs.readFile('./foo/bar', next) 
-
 
   return data
 })
