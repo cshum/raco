@@ -56,7 +56,9 @@ var getN = caco(function * (n, next) {
 getN(123, function (err, val) {
   console.log(val) // 123
 })
-getN(123).then(...)
+getN(123).then(function (val) {
+  console.log(val) // 123
+})
 
 getN(689).catch(function (err) {
   console.log(err) // boom
