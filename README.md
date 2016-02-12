@@ -18,17 +18,19 @@ npm install caco
 var caco = require('caco')
 
 var fn = caco(function * (next) {
-  var foo = yield Promise.resolve('bar') // yield promise
-  yield setTimeout(next, 100) // yield callback using 'next' argument
-
   // try/catch errors
   try {
-    yield Promise.reject('boom')
+    yield Promise.reject('boom') // yield promise reject throws error
   } catch (err) {
     console.log(err) // 'boom'
   }
 
-  var data = yield fs.readFile('./foo/bar', next)
+  var foo = yield Promise.resolve('bar') // yield promise
+  yield setTimeout(next, 100) // yield callback using 'next' argument
+
+  // yield callback of form next(err, data). Returning data, throw if err exists
+  var data = yield fs.readfile('./foo/bar', next) 
+
   return data
 })
 
