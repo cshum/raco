@@ -26,7 +26,7 @@ var fn = caco(function * (next) {
   }
 
   var foo = yield Promise.resolve('bar') // yield promise
-  yield setTimeout(next, 100) // yield callback using 'next' argument
+  yield setTimeout(next, 1000) // yield callback using 'next' argument, delay 1 second
 
   // yield callback of form next(err, data). Returning data, throw if err exists
   var data = yield fs.readfile('./foo/bar', next) 
