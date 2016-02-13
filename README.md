@@ -48,26 +48,26 @@ To enable yieldable callbacks, yielding non-promise-nor-generator value pauses t
 Until `next(err, val)` being invoked by callback, 
 where `val` passes back to yielded value, or `throw` if `err` exists.
 
-## Yieldable Mapper
+## Yieldables
 
 By default, the following objects are supported for `yield`:
 * `Promise`
 * `Observable`
 * `Generator`
 
-Caco also lets you specify yieldable mapper function, 
+Caco also accepts a yield mapper function, 
 so that one can basically yield anything.
 
 #### var fn = caco(fn *, mapper)
 
 ```js
 function mapper (val, cb) {
-  // yield array
+  // map array to Promise.all
   if (Array.isArray(val)) {
     Promise.all(val).then(function (res) {
       cb(null, res)
     }, cb)
-    return true // acknowledge val to be yieldable
+    return true // acknowledge yieldable
   }
 
   // Anything can be mapped!
