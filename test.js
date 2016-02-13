@@ -5,7 +5,7 @@ test('caco', function (t) {
   t.plan(5)
 
   function * v (n) {
-    return yield Promise.resolve(n)
+    return Promise.resolve(n)
   }
   var n = caco(function * (n) {
     return yield Promise.reject(n)

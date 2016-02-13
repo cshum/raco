@@ -1,11 +1,30 @@
-var isGenerator = function (val) {
+function isGenerator (val) {
   return val && typeof val.next === 'function' && typeof val.throw === 'function'
 }
-var isPromise = function (val) {
+function isPromise (val) {
   return val && typeof val.then === 'function'
 }
 
-module.exports = function caco (gen) {
+// default yieldable mapper
+function defaultMapper (val, cb) {
+  if (isPromise(val)) {
+    val.then(function (value) {
+      cb(null, value)
+    }, function (err) {
+      cb(err || new Error())
+    })
+    return true
+  }
+
+  if (isGenerator(val)) {
+    caco(val)(cb)
+    return true
+  }
+
+  return false
+}
+
+function caco (gen, mapper) {
   return function () {
     var args = Array.prototype.slice.call(arguments)
     var self = this
@@ -23,18 +42,11 @@ module.exports = function caco (gen) {
         var state = err ? iter.throw(err) : iter.next(res)
         if (state.done) iter = null
 
-        if (isPromise(state.value)) {
-          // handle thenable
-          state.value.then(function (value) {
-            step(null, value)
-          }, function (err) {
-            step(err || true)
-          })
-        } else if (isGenerator(state.value)) {
-          caco(state.value)(next)
-        } else if (state.done) {
-          step(null, state.value)
-        }
+        var yieldable = defaultMapper(state.value, step) || (
+          typeof mapper === 'function' && mapper(state.value, step)
+        )
+
+        if (!yieldable && state.done) step(null, state.value)
       } catch (err) {
         // catch err, break iteration
         return callback.call(self, err)
@@ -61,3 +73,5 @@ module.exports = function caco (gen) {
     }
   }
 }
+
+module.exports = caco
