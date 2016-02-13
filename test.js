@@ -1,45 +1,79 @@
 var test = require('tape')
 var caco = require('./')
 
-test('caco', function (t) {
-  t.plan(5)
+test('arguments and return', function (t) {
+  t.plan(8)
 
-  function * v (n) {
-    return Promise.resolve(n)
+  var fn = caco(function * (num, str, next) {
+    t.equal(num, 167, 'arguemnt')
+    t.equal(str, '167', 'arguemnt')
+    t.equal(typeof next, 'function', 'stepping function')
+  })
+
+  t.notOk(fn(167, '167', function () { }), 'passing callback returns undefined')
+  t.equal(typeof fn(167, '167').then, 'function', 'no callback returns promise')
+})
+
+test('scope', function (t) {
+  var obj = {}
+
+  caco(function * () {
+    t.equal(this, obj, 'correct scope')
+    t.end()
+  }).call(obj)
+})
+
+test('resolve and reject', function (t) {
+  t.plan(6)
+
+  caco(function * () {
+    return 167
+  })().then(function (val) {
+    t.equal(val, 167, 'promise resolve')
+  }, t.error)
+
+  caco(function * () {
+    throw new Error('167')
+  })().then(t.error, function (err) {
+    t.equal(err.message, '167', 'promise reject')
+  })
+
+  caco(function * () {
+    return yield Promise.resolve(167)
+  })(function (err, val) {
+    t.error(err)
+    t.equal(val, 167, 'callback value')
+  })
+
+  caco(function * () {
+    return Promise.reject(167)
+  })(function (err, val) {
+    t.equal(err, 167, 'callback error')
+    t.error(val)
+  })
+})
+
+test('default yieldable', function (t) {
+  function * resolveGen (n) {
+    return yield Promise.resolve(n)
   }
-  var n = caco(function * (n) {
+  var rejectFn = caco(function * (n) {
     return yield Promise.reject(n)
   })
-  var v1 = caco(function * (next) {
-    yield setTimeout(next, 0)
+  var instantVal = caco(function * (next) {
     return 1044
   })
-  var v2 = caco(function * () {
+  var tryCatch = caco(function * () {
     try {
-      return yield n(689)
-    } catch (e) {
-      return yield v(167)
+      return yield rejectFn(689)
+    } catch (err) {
+      t.equal(err, 689, 'try/catch promise reject')
+      return yield resolveGen(167)
     }
   })
-  var f = caco(function * (str, next) {
-    var n = (yield v1()) / 2 + (yield v2(next))
-    return str + n
-  })
-
-  n('boom', function (err) {
-    t.equal(err, 'boom', 'correct callback error')
-  })
-
-  n('boom').then(t.error).catch(function (err) {
-    t.equal(err, 'boom', 'correct promise reject')
-  })
-
-  f('D7', function (err, res) {
-    t.notOk(err, 'no error')
-    t.deepEqual(res, 'D7689', 'correct callback value')
-  })
-
-  f('DLM').then(function (res) {
-    t.deepEqual(res, 'DLM689', 'correct promise value')
-  }).catch(t.error)
+  caco(function * (next) {
+    yield setTimeout(next, 0)
+    t.equal(yield instantVal(next), 1044, 'yield callback')
+    t.equal(yield tryCatch(), 167, 'yield gnerator-promise')
+  })().then(t.end, t.error)
 })

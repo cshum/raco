@@ -1,6 +1,7 @@
 function isGenerator (val) {
   return val && typeof val.next === 'function' && typeof val.throw === 'function'
 }
+
 function isPromise (val) {
   return val && typeof val.then === 'function'
 }
@@ -31,7 +32,12 @@ function caco (gen, mapper) {
     var callback
     if (typeof args[args.length - 1] === 'function') callback = args.pop()
 
-    args.push(next)
+    // callback stepper
+    args.push(function next (err, res) {
+      process.nextTick(function () {
+        step(err, res)
+      })
+    })
 
     var iter = isGenerator(gen) ? gen : gen.apply(self, args)
 
@@ -51,12 +57,6 @@ function caco (gen, mapper) {
         // catch err, break iteration
         return callback.call(self, err)
       }
-    }
-
-    function next (err, res) {
-      process.nextTick(function () {
-        step(err, res)
-      })
     }
 
     if (callback) {
