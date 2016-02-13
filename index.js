@@ -6,6 +6,10 @@ function isPromise (val) {
   return val && typeof val.then === 'function'
 }
 
+function isObservable (val) {
+  return val && typeof val.subscribe === 'function'
+}
+
 // default yieldable mapper
 function defaultMapper (val, cb) {
   if (isPromise(val)) {
@@ -19,6 +23,17 @@ function defaultMapper (val, cb) {
 
   if (isGenerator(val)) {
     caco(val)(cb)
+    return true
+  }
+
+  if (isObservable(val)) {
+    var dispose = val.subscribe(function (res) {
+      cb(null, res)
+      dispose.dispose()
+    }, function (err) {
+      cb(err)
+      dispose.dispose()
+    })
     return true
   }
 
@@ -49,7 +64,7 @@ function caco (gen, mapper) {
         if (state.done) iter = null
 
         var yieldable = defaultMapper(state.value, step) || (
-          typeof mapper === 'function' && mapper(state.value, step)
+          mapper && mapper(state.value, step)
         )
 
         if (!yieldable && state.done) step(null, state.value)

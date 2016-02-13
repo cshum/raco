@@ -12,6 +12,7 @@
   "author": "Adrian C Shum <adrian@cshum.com>",
   "license": "MIT",
   "devDependencies": {
+    "rx": "^4.0.7",
     "standard": "^6.0.4",
     "tape": "^3.0.2"
   }

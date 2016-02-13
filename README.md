@@ -9,7 +9,7 @@ Callback functions require promisify to be compatible, which creates unnecessary
 
 In caco, both callbacks and promises are yieldable.
 Resulting function can also be used by both callbacks and promises.
-This enables a powerful control flow while maintaining compatibility.
+This enables a powerful control flow while maintaining simplicity.
 
 ```bash
 npm install caco

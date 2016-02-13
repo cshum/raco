@@ -1,5 +1,6 @@
 var test = require('tape')
 var caco = require('./')
+var Observable = require('rx').Observable
 
 test('arguments and return', function (t) {
   t.plan(8)
@@ -73,6 +74,12 @@ test('default yieldable', function (t) {
   })
   caco(function * (next) {
     yield setTimeout(next, 0)
+    var o = yield Observable
+      .fromArray([1, 2])
+      .merge(Observable.fromPromise(Promise.resolve(3)))
+      .delay(10)
+      .toArray()
+    t.deepEqual(o, [1, 2, 3], 'yield observable')
     t.equal(yield instantVal(next), 1044, 'yield callback')
     t.equal(yield tryCatch(), 167, 'yield gnerator-promise')
   })().then(t.end, t.error)
