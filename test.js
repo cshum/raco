@@ -82,5 +82,36 @@ test('default yieldable', function (t) {
     t.deepEqual(o, [1, 2, 3], 'yield observable')
     t.equal(yield instantVal(next), 1044, 'yield callback')
     t.equal(yield tryCatch(), 167, 'yield gnerator-promise')
-  })().then(t.end, t.error)
+  })(t.end)
+})
+
+test('yieldable mapper', function (t) {
+  caco(function * () {
+    t.deepEqual(yield [
+      Promise.resolve(1),
+      Promise.resolve(2),
+      3
+    ], [1, 2, 3], 'yield map array to Promise.all')
+
+    try {
+      yield 689
+    } catch (err) {
+      t.equal(err.message, 'DLLM', 'yield 689 throws error')
+    }
+  }, function (val, cb) {
+    // yield array
+    if (Array.isArray(val)) {
+      Promise.all(val).then(function (res) {
+        cb(null, res)
+      }, function (err) {
+        cb(err || new Error())
+      })
+      return true
+    }
+    // yield 689 throws error
+    if (val === 689) {
+      cb(new Error('DLLM'))
+      return true
+    }
+  })(t.end)
 })
