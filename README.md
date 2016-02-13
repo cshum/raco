@@ -15,6 +15,8 @@ This enables a powerful control flow while maintaining simplicity.
 npm install caco
 ```
 
+#### var fn = caco(fn *)
+
 ```js
 var caco = require('caco')
 
@@ -46,28 +48,50 @@ To enable yieldable callbacks, yielding non-promise-nor-generator value pauses t
 Until `next(err, val)` being invoked by callback, 
 where `val` passes back to yielded value, or `throw` if `err` exists.
 
-## API
+## Yieldable Mapper
 
-#### var fn = caco(fn *)
+By default, the following objects are supported for `yield`:
+* `Promise`
+* `Observable`
+* `Generator`
 
-Wraps a generator into a regular function that acceots callback or promise.
-Accepts optional `next` argument for yieldable callback.
+Caco also lets you specify yieldable mapper function, 
+so that one can basically yield anything.
+
+#### var fn = caco(fn *, mapper)
 
 ```js
-var getN = caco(function * (n, next) {
-  if (n === 689) yield Promise.reject('boom') // yield reject throws error
-  return yield Promise.resolve(n)
-})
+function mapper (val, cb) {
+  // yield array
+  if (Array.isArray(val)) {
+    Promise.all(val).then(function (res) {
+      cb(null, res)
+    }, cb)
+    return true // acknowledge val to be yieldable
+  }
 
-getN(123, function (err, val) {
-  console.log(val) // 123
-})
-getN(123).then(function (val) {
-  console.log(val) // 123
-})
-getN(689).catch(function (err) {
-  console.log(err) // boom
-})
+  // Anything can be mapped!
+  if (val === 689) {
+    cb(new Error('DLLM'))
+    return true
+  }
+}
+
+caco(function * () {
+  console.log(yield [
+    Promise.resolve(1),
+    Promise.resolve(2),
+    3
+  ]) // [1, 2, 3]
+
+  // yield 689 throws error
+  try {
+    yield 689
+  } catch (err) {
+    console.log(err) // 'DLLM'
+  }
+}, mapper)(function (err) { })
+
 ```
 
 ## License
