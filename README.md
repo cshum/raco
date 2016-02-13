@@ -4,18 +4,18 @@ Generator based control flow that supports both callbacks and promises.
 
 [![Build Status](https://travis-ci.org/cshum/caco.svg?branch=master)](https://travis-ci.org/cshum/caco)
 
-Many existing flow-control libraries such as [co](https://github.com/tj/co), assumes promises to be the lowest denominator of async handling.
+```bash
+npm install caco
+```
+
+Many existing flow-control libraries such as [co](https://github.com/tj/co), assume promises to be the lowest denominator of async handling.
 Callback functions require promisify to be compatible, which creates unnecessary complication. 
 
 In caco, both callbacks and promises are yieldable.
 Resulting function can also be used by both callbacks and promises.
 This enables a powerful control flow while maintaining simplicity.
 
-```bash
-npm install caco
-```
-
-#### var fn = caco(fn *)
+#### var fn = caco(fn*)
 
 ```js
 var caco = require('caco')
@@ -44,21 +44,21 @@ fn(function (err, res) { })
 fn().then(...).catch(...)
 ```
 
-To enable yieldable callbacks, yielding non-promise-nor-generator value pauses the current generator. 
+## Yieldables
+
+Yieldable callback works by supplying an additional `next` argument. Yielding non-yieldable value pauses the current generator. 
 Until `next(err, val)` being invoked by callback, 
 where `val` passes back to yielded value, or `throw` if `err` exists.
 
-## Yieldables
-
-By default, the following objects are supported for `yield`:
+By default, the following objects are considered yieldable:
 * `Promise`
 * `Observable`
 * `Generator`
 
-Caco also accepts a yield mapper function, 
-so that one can basically yield anything.
+Caco also accepts a yield mapper callback function, 
+so that one can yield pretty much anything.
 
-#### var fn = caco(fn *, mapper)
+#### var fn = caco(fn*, mapper)
 
 ```js
 function mapper (val, cb) {
@@ -88,7 +88,7 @@ caco(function * () {
   try {
     yield 689
   } catch (err) {
-    console.log(err) // 'DLLM'
+    console.log(err.message) // 'DLLM'
   }
 }, mapper)(function (err) { })
 
