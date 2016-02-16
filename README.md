@@ -90,8 +90,41 @@ caco(function * () {
   } catch (err) {
     console.log(err.message) // 'DLLM'
   }
-}, mapper)(function (err) { })
+}, mapper)(function (err, res) {
+  // handle error or return
+})
 
+```
+
+## Aggregated Yield
+
+Multiple results can be aggregated in one `yield` by using `Promise.all` or [callback-all](https://github.com/cshum/callback-all).
+
+```js
+var caco = require('caco')
+var cball = require('callback-all')
+
+caco(function * (next) {
+  // Promise.all
+  var promises = [
+    asyncFn1() // foo
+    asyncFn2() // bar
+    asyncFn3() // hello
+    asyncFn4() // world
+  ]
+  console.log(yield Promise.all(promises)) // ['foo', 'bar', 'hello', 'world']
+
+  // callback-all
+  var all = cball()
+  asyncFn1(all()) // foo
+  asyncFn2(all()) // bar
+  asyncFn3(all()) // hello
+  asyncFn4(all()) // world
+  console.log(yield all(next)) // ['foo', 'bar', 'hello', 'world']
+
+})(function (err, res) {
+ // handle error or return
+})
 ```
 
 ## License
