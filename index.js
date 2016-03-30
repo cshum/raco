@@ -1,3 +1,5 @@
+var isGeneratorFunction = require('is-generator-function')
+
 function isGenerator (val) {
   return val && typeof val.next === 'function' && typeof val.throw === 'function'
 }
@@ -40,7 +42,17 @@ function defaultMapper (val, cb) {
   return false
 }
 
-function caco (gen, mapper) {
+function caco (genFn, mapper) {
+  if (!isGeneratorFunction(genFn) && !isGenerator(genFn)) {
+    // genFn is object, wraps it
+    for (var key in genFn) {
+      if (isGeneratorFunction(genFn[key]) || isGenerator(genFn[key])) {
+        genFn[key] = caco(genFn[key], mapper)
+      }
+    }
+    return genFn
+  }
+
   return function () {
     var args = Array.prototype.slice.call(arguments)
     var self = this
@@ -54,7 +66,7 @@ function caco (gen, mapper) {
       })
     })
 
-    var iter = isGenerator(gen) ? gen : gen.apply(self, args)
+    var iter = isGenerator(genFn) ? genFn : genFn.apply(self, args)
 
     function step (err, res) {
       if (!iter) return callback.apply(self, arguments)

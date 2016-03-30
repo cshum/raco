@@ -15,5 +15,8 @@
     "rx": "^4.0.7",
     "standard": "^6.0.4",
     "tape": "^3.0.2"
+  },
+  "dependencies": {
+    "is-generator-function": "^1.0.3"
   }
 }

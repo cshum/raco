@@ -115,3 +115,26 @@ test('yieldable mapper', function (t) {
     }
   })(t.end)
 })
+
+test('object wrapper', function (t) {
+  var fn = function () {}
+  var gen = (function * () {})()
+  var obj = {
+    test: 'foo',
+    fn: fn,
+    gen: gen,
+    genFn: function * () {
+      try {
+        yield Promise.reject('booom')
+      } catch (e) {
+        t.equal(e, 'booom', 'correct yield')
+      }
+    }
+  }
+  t.equal(caco(obj), obj, 'mutuable')
+  t.equal(obj.test, 'foo', 'ignore non caco')
+  t.equal(obj.fn, fn, 'ignore non caco')
+  t.notOk(obj.gen === gen, 'wrap generator')
+  t.notOk(obj.genFn === fn, 'wrap generator function')
+  obj.genFn(t.end)
+})
