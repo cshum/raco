@@ -15,7 +15,8 @@ In caco, both callbacks and promises are yieldable.
 Resulting function can also be used by both callbacks and promises.
 This enables a powerful control flow while maintaining simplicity.
 
-#### var fn = caco(fn*)
+#### var fn = caco(fn*, [mapper])
+#### caco(obj, [mapper])
 
 ```js
 var caco = require('caco')
@@ -44,6 +45,25 @@ fn(function (err, res) { })
 fn().then(...).catch(...)
 ```
 
+Wraps generator function properties of object:
+
+```js
+function App () {
+  ...
+}
+App.prototype.fn = function * (arg, next) {
+  ...
+}
+
+// wrap prototype object
+caco(App.prototype)
+
+var app = new App()
+
+fn(function (err, res) { ... })
+fn().then(...).catch(...)
+```
+
 ## Yieldables
 
 Yieldable callback works by supplying an additional `next` argument. Yielding non-yieldable value pauses the current generator. 
@@ -57,8 +77,6 @@ By default, the following objects are considered yieldable:
 
 Caco also accepts a yield mapper callback function, 
 so that one can yield pretty much anything.
-
-#### var fn = caco(fn*, mapper)
 
 ```js
 function mapper (val, cb) {
