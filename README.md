@@ -38,19 +38,16 @@ var fn = caco(function * (next) {
   return data
 })
 
-// Use with callback
-fn(function (err, res) { })
+fn(function (err, res) { }) // Use with callback
 
-// Use with promise
-fn().then(...).catch(...)
+fn().then(...).catch(...) // Use with promise
 ```
 
 Wraps generator function properties of object:
 
 ```js
-function App () {
-  ...
-}
+function App () { }
+
 App.prototype.fn = function * (arg, next) {
   ...
 }
@@ -60,8 +57,9 @@ caco(App.prototype)
 
 var app = new App()
 
-fn(function (err, res) { ... })
-fn().then(...).catch(...)
+app.fn(function (err, res) { ... }) // Use with callback
+
+app.fn().then(...).catch(...) // Use with promise
 ```
 
 ## Yieldables
