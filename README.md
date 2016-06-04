@@ -55,7 +55,7 @@ caco(function * (next) {
 
 Wraps a generator function into regular function that optionally accepts callback or returns a promise.
 
-```
+```js
 var fn = caco.wrap(function * (arg1, arg2, next) {
   yield setTimeout(next, 1000) // yield callback using 'next'
 
@@ -88,7 +88,7 @@ app.fn(function (err, val) {...})
 app.fn2().then(...).catch(...)
 ```
 
-## Yieldables
+## Yieldable
 
 By default, the following objects are considered yieldable:
 * `Promise`
