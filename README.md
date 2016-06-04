@@ -15,13 +15,22 @@ In caco, both callbacks and promises are yieldable.
 Resulting function can also be used by both callbacks and promises.
 This enables a powerful control flow while maintaining simplicity.
 
-#### var fn = caco(fn*, [mapper])
-#### caco(obj, [mapper])
+#### `caco(fn*, cb)`
+#### `caco(fn*).then(...).catch(...)`
+
+Resolves a generator function.
+Accepts optional arguments and callback, or returns a promise if callback not exists.
+
+Yieldable callback works by supplying an additional `next` argument. Yielding non-yieldable value pauses the current generator. 
+Until `next(err, val)` being invoked by callback, 
+where `val` passes back to yielded value, or `throw` if `err` exists.
+
+Beware to handle uncaught errors.
 
 ```js
 var caco = require('caco')
 
-var fn = caco(function * (next) {
+caco(function * (next) {
   try {
     yield Promise.reject('boom') // yield promise reject throws error
   } catch (err) {
@@ -36,48 +45,63 @@ var fn = caco(function * (next) {
   var data = yield fs.readFile('./foo/bar', next) 
 
   return data
+}).catch(function (err) {
+  // handle uncaught errors
 })
 
-fn(function (err, res) { }) // Use with callback
-
-fn().then(...).catch(...) // Use with promise
 ```
+
+#### `var fn = caco.wrap(fn*)`
+
+Wraps a generator function into regular function that optionally accepts callback or returns a promise.
+
+```
+var fn = caco.wrap(function * (arg1, arg2, next) {
+  yield setTimeout(next, 1000) // yield callback using 'next'
+
+  return yield Promise.resolve(arg1 + arg2)
+})
+
+fn(167, 199, function (err, val) { ... }) // Use with callback
+
+fn(167, 689) // use with promise
+  .then(function (val) { ... })
+  .catch(function (err) { ... })
+```
+
+#### `caco.wrapAll(obj)`
 
 Wraps generator function properties of object:
 
 ```js
 function App () { }
 
-App.prototype.fn = function * (arg, next) {
-  ...
-}
+App.prototype.fn = function * (next) { ... }
+App.prototype.fn2 = function * (next) { ... }
 
 // wrap prototype object
-caco(App.prototype)
+caco.wrapAll(App.prototype)
 
 var app = new App()
 
-app.fn(function (err, res) { ... }) // Use with callback
-
-app.fn().then(...).catch(...) // Use with promise
+app.fn(function (err, val) { ... })
+app.fn2().then(...).catch(...)
 ```
 
 ## Yieldables
-
-Yieldable callback works by supplying an additional `next` argument. Yielding non-yieldable value pauses the current generator. 
-Until `next(err, val)` being invoked by callback, 
-where `val` passes back to yielded value, or `throw` if `err` exists.
 
 By default, the following objects are considered yieldable:
 * `Promise`
 * `Observable`
 * `Generator`
 
-Caco also accepts a yield mapper callback function, 
+It is also possible to override the yieldable mapper, 
 so that one can yield pretty much anything.
 
+#### `caco._yieldable = function (val, cb) { }`
+
 ```js
-function mapper (val, cb) {
+caco._yieldable = function (val, cb) {
   // map array to Promise.all
   if (Array.isArray(val)) {
     Promise.all(val).then(function (res) {
@@ -89,8 +113,10 @@ function mapper (val, cb) {
   // Anything can be mapped!
   if (val === 689) {
     cb(new Error('DLLM'))
-    return true
+    return true // acknowledge yieldable
   }
+
+  return false // acknowledge non-yieldable
 }
 
 caco(function * () {
