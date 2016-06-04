@@ -24,13 +24,14 @@ function _caco (genFn, args) {
   var done = false
   var callback
 
+  // pass caco next to generator function
   if (typeof args[args.length - 1] === 'function') callback = args.pop()
-
-  // callback stepper
   args.push(next)
+
   var iter = isGenerator(genFn) ? genFn : genFn.apply(self, args)
 
-  function step (err, res) {
+  // callback stepper
+  function step (err, val) {
     if (!iter) {
       if (!done) {
         done = true
@@ -39,7 +40,7 @@ function _caco (genFn, args) {
     } else {
       // generator step
       try {
-        var state = err ? iter.throw(err) : iter.next(res)
+        var state = err ? iter.throw(err) : iter.next(val)
         if (state.done) iter = null
 
         // resolve yieldable
@@ -54,6 +55,7 @@ function _caco (genFn, args) {
     }
   }
 
+  // callback stepper with nextTick delay
   function next () {
     var args = Array.prototype.slice.call(arguments)
     process.nextTick(function () {
@@ -88,7 +90,7 @@ function caco (genFn) {
 }
 
 /**
- * yieldable mapper
+ * yieldable callback mapper
  *
  * @param {*} val - yielded value to resolve
  * @param {function} cb - resolver callback function
@@ -106,8 +108,8 @@ caco._yieldable = function (val, cb) {
     caco(val, cb)
     return true
   } else if (isObservable(val)) {
-    var dispose = val.subscribe(function (res) {
-      cb(null, res)
+    var dispose = val.subscribe(function (val) {
+      cb(null, val)
       dispose.dispose()
     }, function (err) {
       cb(err || new Error())
@@ -120,11 +122,11 @@ caco._yieldable = function (val, cb) {
 }
 
 /**
- * wraps a generator function into regular function that 
+ * wraps a generator function into regular function that
  * optionally accepts callback or returns a promise.
  *
  * @param {function*} genFn - generator function
- * @returns {function} regular function 
+ * @returns {function} regular function
  */
 caco.wrap = function (genFn) {
   return function () {
