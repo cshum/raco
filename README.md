@@ -49,9 +49,6 @@ Yieldable callback works by supplying an additional `next` argument. Yielding no
 Until `next(err, val)` being invoked by callback, 
 where `val` passes back to yielded value, or `throw` if `err` exists.
 
-Beware to handle uncaught errors.
-
-
 #### `var fn = caco.wrap(fn*)`
 
 Wraps a generator function into regular function that optionally accepts callback or returns a promise.
