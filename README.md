@@ -21,12 +21,6 @@ This enables a powerful control flow while maintaining simplicity.
 Resolves a generator function.
 Accepts optional arguments and callback, or returns a promise if callback not exists.
 
-Yieldable callback works by supplying an additional `next` argument. Yielding non-yieldable value pauses the current generator. 
-Until `next(err, val)` being invoked by callback, 
-where `val` passes back to yielded value, or `throw` if `err` exists.
-
-Beware to handle uncaught errors.
-
 ```js
 var caco = require('caco')
 
@@ -50,6 +44,13 @@ caco(function * (next) {
 })
 
 ```
+
+Yieldable callback works by supplying an additional `next` argument. Yielding non-yieldable value pauses the current generator. 
+Until `next(err, val)` being invoked by callback, 
+where `val` passes back to yielded value, or `throw` if `err` exists.
+
+Beware to handle uncaught errors.
+
 
 #### `var fn = caco.wrap(fn*)`
 

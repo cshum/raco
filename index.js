@@ -12,6 +12,13 @@ function isObservable (val) {
   return val && typeof val.subscribe === 'function'
 }
 
+/**
+ * private caco resolver
+ *
+ * @param {function*} genFn - generator function
+ * @param {array} args - arguments in real array form
+ * @returns {promise} if no callback provided
+ */
 function _caco (genFn, args) {
   var self = this
   var done = false
@@ -68,11 +75,25 @@ function _caco (genFn, args) {
   }
 }
 
+/**
+ * caco resolver
+ *
+ * @param {function*} genFn - generator function
+ * @param {...*} args - optional arguments
+ * @returns {promise} if no callback provided
+ */
 function caco (genFn) {
   var args = Array.prototype.slice.call(arguments, 1)
   return _caco.call(this, genFn, args)
 }
 
+/**
+ * yieldable mapper
+ *
+ * @param {*} val - yielded value to resolve
+ * @param {function} cb - resolver callback function
+ * @returns {boolean} acknowledge yieldable
+ */
 caco._yieldable = function (val, cb) {
   if (isPromise(val)) {
     val.then(function (value) {
@@ -98,6 +119,13 @@ caco._yieldable = function (val, cb) {
   }
 }
 
+/**
+ * wraps a generator function into regular function that 
+ * optionally accepts callback or returns a promise.
+ *
+ * @param {function*} genFn - generator function
+ * @returns {function} regular function 
+ */
 caco.wrap = function (genFn) {
   return function () {
     var args = Array.prototype.slice.call(arguments)
@@ -105,6 +133,12 @@ caco.wrap = function (genFn) {
   }
 }
 
+/**
+ * wraps generator function properties of object
+ *
+ * @param {object} obj - object to caco.wrap
+ * @returns {object} original object
+ */
 caco.wrapAll = function (obj) {
   for (var key in obj) {
     if (
