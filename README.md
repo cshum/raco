@@ -15,8 +15,8 @@ In caco, both callbacks and promises are yieldable.
 Resulting function can also be used by both callbacks and promises.
 This enables a powerful control flow while maintaining simplicity.
 
-#### `caco(fn*, cb)`
-#### `caco(fn*).then(...).catch(...)`
+### `caco(fn*, cb)`
+### `caco(fn*).then(...).catch(...)`
 
 Resolves a generator function.
 Accepts optional arguments and callback, or returns a promise if callback not exists.
@@ -46,12 +46,12 @@ caco(function * (next) {
 
   return data
 }).catch(function (err) {
-  // handle uncaught errors
+  // handle uncaught error
 })
 
 ```
 
-#### `var fn = caco.wrap(fn*)`
+### `var fn = caco.wrap(fn*)`
 
 Wraps a generator function into regular function that optionally accepts callback or returns a promise.
 
@@ -69,22 +69,22 @@ fn(167, 689) // use with promise
   .catch(function (err) { ... })
 ```
 
-#### `caco.wrapAll(obj)`
+### `caco.wrapAll(obj)`
 
 Wraps generator function properties of object:
 
 ```js
 function App () { }
 
-App.prototype.fn = function * (next) { ... }
-App.prototype.fn2 = function * (next) { ... }
+App.prototype.fn = function * (next) {...}
+App.prototype.fn2 = function * (next) {...}
 
 // wrap prototype object
 caco.wrapAll(App.prototype)
 
 var app = new App()
 
-app.fn(function (err, val) { ... })
+app.fn(function (err, val) {...})
 app.fn2().then(...).catch(...)
 ```
 
@@ -98,7 +98,7 @@ By default, the following objects are considered yieldable:
 It is also possible to override the yieldable mapper, 
 so that one can yield pretty much anything.
 
-#### `caco._yieldable = function (val, cb) { }`
+### `caco._yieldable = function (val, cb) { }`
 
 ```js
 caco._yieldable = function (val, cb) {
@@ -132,8 +132,8 @@ caco(function * () {
   } catch (err) {
     console.log(err.message) // 'DLLM'
   }
-}, mapper)(function (err, res) {
-  // handle error or return
+}).catch(function (err) {
+  // handle uncaught error
 })
 
 ```
@@ -149,23 +149,19 @@ var cball = require('callback-all')
 caco(function * (next) {
   // Promise.all
   var promises = [
-    asyncFn1() // foo
+    asyncFn1(), // foo
     asyncFn2() // bar
-    asyncFn3() // hello
-    asyncFn4() // world
   ]
-  console.log(yield Promise.all(promises)) // ['foo', 'bar', 'hello', 'world']
+  console.log(yield Promise.all(promises)) // ['foo', 'bar']
 
   // callback-all
   var all = cball()
   asyncFn1(all()) // foo
   asyncFn2(all()) // bar
-  asyncFn3(all()) // hello
-  asyncFn4(all()) // world
-  console.log(yield all(next)) // ['foo', 'bar', 'hello', 'world']
+  console.log(yield all(next)) // ['foo', 'bar']
 
-})(function (err, res) {
- // handle error or return
+}).catch(function (err) {
+ // handle uncaught error
 })
 ```
 
