@@ -12,8 +12,59 @@ function isObservable (val) {
   return val && typeof val.subscribe === 'function'
 }
 
-// default yieldable mapper
-function defaultMapper (val, cb) {
+function _caco (genFn, args) {
+  var self = this
+  var callback
+  if (typeof args[args.length - 1] === 'function') callback = args.pop()
+
+  // callback stepper
+  args.push(function next (err, res) {
+    process.nextTick(function () {
+      // todo if not paused, callback.apply
+      // else keep stepping
+      step(err, res)
+    })
+  })
+
+  var iter = isGenerator(genFn) ? genFn : genFn.apply(self, args)
+
+  function step (err, res) {
+    if (!iter) return callback.apply(self, arguments)
+    // generator step
+    try {
+      var state = err ? iter.throw(err) : iter.next(res)
+      if (state.done) iter = null
+
+      var yieldable = caco._mapper(state.value, step)
+
+      if (!yieldable && state.done) step(null, state.value)
+    } catch (err) {
+      // catch err, break iteration
+      return callback.call(self, err)
+    }
+  }
+
+  if (callback) {
+    step()
+  } else {
+    // use promise if no callback
+    return new Promise(function (resolve, reject) {
+      callback = function (err, result) {
+        if (err) return reject(err)
+        resolve(result)
+      }
+      step()
+    })
+  }
+}
+
+function caco (genFn) {
+  var args = Array.prototype.slice.call(arguments, 1)
+  return _caco.call(this, genFn, args)
+}
+
+// caco yieldable mapper
+caco._mapper = function (val, cb) {
   if (isPromise(val)) {
     val.then(function (value) {
       cb(null, value)
@@ -24,7 +75,7 @@ function defaultMapper (val, cb) {
   }
 
   if (isGenerator(val)) {
-    caco(val)(cb)
+    caco(val, cb)
     return true
   }
 
@@ -42,63 +93,23 @@ function defaultMapper (val, cb) {
   return false
 }
 
-function caco (genFn, mapper) {
+caco.wrap = function (genFn) {
   if (!isGeneratorFunction(genFn) && !isGenerator(genFn)) {
-    // genFn is object, wraps it
-    for (var key in genFn) {
-      if (isGeneratorFunction(genFn[key]) || isGenerator(genFn[key])) {
-        genFn[key] = caco(genFn[key], mapper)
-      }
-    }
-    return genFn
+    return caco.wrapAll(genFn)
   }
-
   return function () {
     var args = Array.prototype.slice.call(arguments)
-    var self = this
-    var callback
-    if (typeof args[args.length - 1] === 'function') callback = args.pop()
+    return _caco.call(this, genFn, args)
+  }
+}
 
-    // callback stepper
-    args.push(function next (err, res) {
-      process.nextTick(function () {
-        step(err, res)
-      })
-    })
-
-    var iter = isGenerator(genFn) ? genFn : genFn.apply(self, args)
-
-    function step (err, res) {
-      if (!iter) return callback.apply(self, arguments)
-      // generator step
-      try {
-        var state = err ? iter.throw(err) : iter.next(res)
-        if (state.done) iter = null
-
-        var yieldable = defaultMapper(state.value, step) || (
-          mapper && mapper(state.value, step)
-        )
-
-        if (!yieldable && state.done) step(null, state.value)
-      } catch (err) {
-        // catch err, break iteration
-        return callback.call(self, err)
-      }
-    }
-
-    if (callback) {
-      step()
-    } else {
-      // use promise if no callback
-      return new Promise(function (resolve, reject) {
-        callback = function (err, result) {
-          if (err) return reject(err)
-          resolve(result)
-        }
-        step()
-      })
+caco.wrapAll = function (obj) {
+  for (var key in obj) {
+    if (isGeneratorFunction(obj[key]) || isGenerator(obj[key])) {
+      obj[key] = caco.wrap(obj[key])
     }
   }
+  return obj
 }
 
 module.exports = caco
