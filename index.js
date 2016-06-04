@@ -14,34 +14,44 @@ function isObservable (val) {
 
 function _caco (genFn, args) {
   var self = this
+  var done = false
   var callback
+
   if (typeof args[args.length - 1] === 'function') callback = args.pop()
 
   // callback stepper
-  args.push(function next (err, res) {
-    process.nextTick(function () {
-      // todo if not paused, callback.apply
-      // else keep stepping
-      step(err, res)
-    })
-  })
-
+  args.push(next)
   var iter = isGenerator(genFn) ? genFn : genFn.apply(self, args)
 
   function step (err, res) {
-    if (!iter) return callback.apply(self, arguments)
-    // generator step
-    try {
-      var state = err ? iter.throw(err) : iter.next(res)
-      if (state.done) iter = null
+    if (!iter) {
+      if (!done) {
+        done = true
+        callback.apply(self, arguments)
+      }
+    } else {
+      // generator step
+      try {
+        var state = err ? iter.throw(err) : iter.next(res)
+        if (state.done) iter = null
 
-      var yieldable = caco._mapper(state.value, step)
+        // resolve yieldable
+        var isYieldable = caco._yieldable(state.value, step)
 
-      if (!yieldable && state.done) step(null, state.value)
-    } catch (err) {
-      // catch err, break iteration
-      return callback.call(self, err)
+        if (!isYieldable && state.done) next(null, state.value)
+      } catch (err) {
+        // catch err, break iteration
+        done = true
+        callback.call(self, err)
+      }
     }
+  }
+
+  function next () {
+    var args = Array.prototype.slice.call(arguments)
+    process.nextTick(function () {
+      step.apply(self, args)
+    })
   }
 
   if (callback) {
@@ -63,8 +73,7 @@ function caco (genFn) {
   return _caco.call(this, genFn, args)
 }
 
-// caco yieldable mapper
-caco._mapper = function (val, cb) {
+caco._yieldable = function (val, cb) {
   if (isPromise(val)) {
     val.then(function (value) {
       cb(null, value)
@@ -72,31 +81,24 @@ caco._mapper = function (val, cb) {
       cb(err || new Error())
     })
     return true
-  }
-
-  if (isGenerator(val)) {
+  } else if (isGenerator(val)) {
     caco(val, cb)
     return true
-  }
-
-  if (isObservable(val)) {
+  } else if (isObservable(val)) {
     var dispose = val.subscribe(function (res) {
       cb(null, res)
       dispose.dispose()
     }, function (err) {
-      cb(err)
+      cb(err || new Error())
       dispose.dispose()
     })
     return true
+  } else {
+    return false
   }
-
-  return false
 }
 
 caco.wrap = function (genFn) {
-  if (!isGeneratorFunction(genFn) && !isGenerator(genFn)) {
-    return caco.wrapAll(genFn)
-  }
   return function () {
     var args = Array.prototype.slice.call(arguments)
     return _caco.call(this, genFn, args)
@@ -105,7 +107,10 @@ caco.wrap = function (genFn) {
 
 caco.wrapAll = function (obj) {
   for (var key in obj) {
-    if (isGeneratorFunction(obj[key]) || isGenerator(obj[key])) {
+    if (
+      obj.hasOwnProperty(key) &&
+      (isGeneratorFunction(obj[key]) || isGenerator(obj[key]))
+    ) {
       obj[key] = caco.wrap(obj[key])
     }
   }

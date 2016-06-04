@@ -2,17 +2,35 @@ var test = require('tape')
 var caco = require('./')
 var Observable = require('rx').Observable
 
-test('arguments and return', function (t) {
-  t.plan(8)
+test('arguments and callback return', function (t) {
+  t.plan(10)
 
   var fn = caco.wrap(function * (num, str, next) {
     t.equal(num, 167, 'arguemnt')
     t.equal(str, '167', 'arguemnt')
     t.equal(typeof next, 'function', 'stepping function')
+    next(null, 'foo', 'bar') // should return
+    return 'boom' // should not return
   })
 
-  t.notOk(fn(167, '167', function () { }), 'passing callback returns undefined')
-  t.equal(typeof fn(167, '167').then, 'function', 'no callback returns promise')
+  // callback
+  t.notOk(fn(167, '167', function (err, res) {
+    t.notOk(err, 'no callback error')
+    t.deepEqual(
+      Array.prototype.slice.call(arguments),
+      [null, 'foo', 'bar'],
+      'return callback arguments'
+    )
+  }), 'passing callback returns undefined')
+
+  // promise
+  fn(167, '167').then(function () {
+    t.deepEqual(
+      Array.prototype.slice.call(arguments),
+      ['foo'],
+      'return callback value for promise'
+    )
+  }, t.error)
 })
 
 test('scope', function (t) {
@@ -27,18 +45,7 @@ test('scope', function (t) {
 test('resolve and reject', function (t) {
   t.plan(6)
 
-  caco(function * () {
-    return 167
-  }).then(function (val) {
-    t.equal(val, 167, 'promise resolve')
-  }, t.error)
-
-  caco(function * () {
-    throw new Error('167')
-  }).then(t.error, function (err) {
-    t.equal(err.message, '167', 'promise reject')
-  })
-
+  // callback
   caco(function * () {
     return yield Promise.resolve(167)
   }, function (err, val) {
@@ -52,9 +59,22 @@ test('resolve and reject', function (t) {
     t.equal(err, 167, 'callback error')
     t.error(val)
   })
+
+  // promise
+  caco(function * () {
+    return 167
+  }).then(function (val) {
+    t.equal(val, 167, 'promise resolve')
+  }, t.error)
+
+  caco(function * () {
+    throw new Error('167')
+  }).then(t.error, function (err) {
+    t.equal(err.message, '167', 'promise reject')
+  })
 })
 
-test('default yieldable', function (t) {
+test('yieldable', function (t) {
   function * resolveGen (n) {
     return yield Promise.resolve(n)
   }
@@ -85,6 +105,41 @@ test('default yieldable', function (t) {
   }, t.end)
 })
 
+test('override yieldable', function (t) {
+  var orig = caco._yieldable
+  caco._yieldable = function (val, cb) {
+    // yield array
+    if (Array.isArray(val)) {
+      Promise.all(val).then(function (res) {
+        cb(null, res)
+      }, function (err) {
+        cb(err || new Error())
+      })
+      return true
+    }
+    // yield 689 throws error
+    if (val === 689) {
+      cb(new Error('DLLM'))
+      return true
+    }
+  }
+
+  caco(function * () {
+    t.deepEqual(yield [
+      Promise.resolve(1),
+      Promise.resolve(2),
+      3
+    ], [1, 2, 3], 'yield map array to Promise.all')
+
+    try {
+      yield 689
+    } catch (err) {
+      t.equal(err.message, 'DLLM', 'yield 689 throws error')
+      caco._yieldable = orig
+    }
+  }, t.end)
+})
+
 test('wrapAll', function (t) {
   var fn = function () {}
   var gen = (function * () {})()
@@ -108,34 +163,3 @@ test('wrapAll', function (t) {
   obj.genFn(t.end)
 })
 
-test('yieldable mapper', function (t) {
-  caco._mapper = function (val, cb) {
-    // yield array
-    if (Array.isArray(val)) {
-      Promise.all(val).then(function (res) {
-        cb(null, res)
-      }, function (err) {
-        cb(err || new Error())
-      })
-      return true
-    }
-    // yield 689 throws error
-    if (val === 689) {
-      cb(new Error('DLLM'))
-      return true
-    }
-  }
-  caco(function * () {
-    t.deepEqual(yield [
-      Promise.resolve(1),
-      Promise.resolve(2),
-      3
-    ], [1, 2, 3], 'yield map array to Promise.all')
-
-    try {
-      yield 689
-    } catch (err) {
-      t.equal(err.message, 'DLLM', 'yield 689 throws error')
-    }
-  }, t.end)
-})
