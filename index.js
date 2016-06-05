@@ -13,7 +13,7 @@ function isObservable (val) {
 }
 
 /**
- * private caco resolver
+ * internal caco resolver
  *
  * @param {function*} genFn - generator function
  * @param {array} args - arguments in real array form
@@ -66,7 +66,7 @@ function _caco (genFn, args) {
   if (callback) {
     step()
   } else {
-    // use promise if no callback
+    // return promise if no callback
     return new Promise(function (resolve, reject) {
       callback = function (err, result) {
         if (err) return reject(err)
