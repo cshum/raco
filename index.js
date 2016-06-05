@@ -59,6 +59,8 @@ function _caco (genFn, args) {
   // callback stepper with nextTick delay
   function next () {
     var args = Array.prototype.slice.call(arguments)
+    // todo check generator status suspended
+    // if not suspended, means that next() called directly
     process.nextTick(function () {
       step.apply(self, args)
     })
