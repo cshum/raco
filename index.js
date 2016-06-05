@@ -46,7 +46,8 @@ function _caco (genFn, args) {
         // resolve yieldable
         var isYieldable = caco._yieldable(state.value, step)
 
-        if (!isYieldable && state.done) next(null, state.value)
+        // next if generator returned non-yieldable
+        if (!isYieldable && !iter) next(null, state.value)
       } catch (err) {
         // catch err, break iteration
         done = true
@@ -68,9 +69,9 @@ function _caco (genFn, args) {
   } else {
     // return promise if no callback
     return new Promise(function (resolve, reject) {
-      callback = function (err, result) {
+      callback = function (err, val) {
         if (err) return reject(err)
-        resolve(result)
+        resolve(val)
       }
       step()
     })
