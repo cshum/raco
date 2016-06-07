@@ -83,11 +83,11 @@ test('yieldable', function (t) {
     return yield Promise.resolve(n)
   }
   var rejectFn = caco.wrap(function * (n) {
-    return yield Promise.reject(n)
+    return Promise.reject(n)
   })
-  var instantVal = caco.wrap(function * (next) {
-    return 1044
-  })
+  var instantCb = function (cb) {
+    cb(null, 1044)
+  }
   var tryCatch = caco.wrap(function * () {
     try {
       return yield rejectFn(689)
@@ -104,7 +104,7 @@ test('yieldable', function (t) {
       .delay(10)
       .toArray()
     t.deepEqual(o, [1, 2, 3], 'yield observable')
-    t.equal(yield instantVal(next), 1044, 'yield callback')
+    t.equal(yield instantCb(next), 1044, 'yield callback')
     t.equal(yield tryCatch(), 167, 'yield gnerator-promise')
   }).catch(t.error)
 })
