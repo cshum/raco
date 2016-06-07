@@ -34,6 +34,8 @@ test('arguments and callback return', function (t) {
 })
 
 test('scope', function (t) {
+  t.plan(1)
+
   var obj = {}
 
   caco.wrap(function * () {
@@ -75,6 +77,8 @@ test('resolve and reject', function (t) {
 })
 
 test('yieldable', function (t) {
+  t.plan(4)
+
   function * resolveGen (n) {
     return yield Promise.resolve(n)
   }
@@ -102,10 +106,12 @@ test('yieldable', function (t) {
     t.deepEqual(o, [1, 2, 3], 'yield observable')
     t.equal(yield instantVal(next), 1044, 'yield callback')
     t.equal(yield tryCatch(), 167, 'yield gnerator-promise')
-  }, t.end)
+  }).catch(t.error)
 })
 
 test('override yieldable', function (t) {
+  t.plan(2)
+
   var orig = caco._yieldable
   caco._yieldable = function (val, cb) {
     // yield array
@@ -137,10 +143,12 @@ test('override yieldable', function (t) {
       t.equal(err.message, 'DLLM', 'yield 689 throws error')
       caco._yieldable = orig
     }
-  }, t.end)
+  }).catch(t.error)
 })
 
 test('wrapAll', function (t) {
+  t.plan(6)
+
   var fn = function () {}
   var gen = (function * () {})()
   var obj = {
@@ -160,6 +168,6 @@ test('wrapAll', function (t) {
   t.equal(obj.fn, fn, 'ignore non caco')
   t.notOk(obj.gen === gen, 'wrap generator')
   t.notOk(obj.genFn === fn, 'wrap generator function')
-  obj.genFn(t.end)
+  obj.genFn().catch(t.error)
 })
 

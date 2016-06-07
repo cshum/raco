@@ -50,7 +50,7 @@ function _caco (genFn, args) {
         var isYieldable = caco._yieldable(state.value, step)
 
         // next if generator returned non-yieldable
-        if (!isYieldable && !iter) step(null, state.value)
+        if (!isYieldable && !iter) next(null, state.value)
       } catch (err) {
         // catch err, break iteration
         done = true
