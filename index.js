@@ -22,6 +22,7 @@ function isObservable (val) {
 function _caco (genFn, args) {
   var self = this
   var done = false
+  var suspended = false
   var callback
 
   // pass caco next to generator function
@@ -32,6 +33,7 @@ function _caco (genFn, args) {
 
   // callback stepper
   function step (err, val) {
+    suspended = false
     if (!iter) {
       if (!done) {
         done = true
@@ -44,10 +46,11 @@ function _caco (genFn, args) {
         if (state.done) iter = null
 
         // resolve yieldable
+        suspended = true
         var isYieldable = caco._yieldable(state.value, step)
 
         // next if generator returned non-yieldable
-        if (!isYieldable && !iter) next(null, state.value)
+        if (!isYieldable && !iter) step(null, state.value)
       } catch (err) {
         // catch err, break iteration
         done = true
@@ -59,11 +62,16 @@ function _caco (genFn, args) {
   // callback stepper with nextTick delay
   function next () {
     var args = Array.prototype.slice.call(arguments)
-    // todo check generator status suspended
-    // if not suspended, means that next() called directly
-    process.nextTick(function () {
-      step.apply(self, args)
-    })
+    if (suspended) {
+      // generator suspended, step() with nextTick
+      process.nextTick(function () {
+        step.apply(self, args)
+      })
+    } else {
+      // if not suspended, next() called directly then callback
+      done = true
+      callback.apply(self, args)
+    }
   }
 
   if (callback) {
