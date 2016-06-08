@@ -77,7 +77,7 @@ test('resolve and reject', function (t) {
 })
 
 test('yieldable', function (t) {
-  t.plan(4)
+  t.plan(6)
 
   function * resolveGen (n) {
     return yield Promise.resolve(n)
@@ -96,16 +96,27 @@ test('yieldable', function (t) {
       return yield resolveGen(167)
     }
   })
-  caco(function * (next) {
-    yield setTimeout(next, 0)
-    var o = yield Observable
+  var tryCatchNext = caco.wrap(function * (next) {
+    try {
+      return yield next(689)
+    } catch (err) {
+      t.equal(err, 689, 'try/catch next err')
+      return yield next(null, 167)
+    }
+  })
+  var observ = function () {
+    return Observable
       .fromArray([1, 2])
       .merge(Observable.fromPromise(Promise.resolve(3)))
       .delay(10)
       .toArray()
-    t.deepEqual(o, [1, 2, 3], 'yield observable')
+  }
+  caco(function * (next) {
+    yield setTimeout(next, 0)
+    t.deepEqual(yield observ(), [1, 2, 3], 'yield observable')
     t.equal(yield instantCb(next), 1044, 'yield callback')
     t.equal(yield tryCatch(), 167, 'yield gnerator-promise')
+    t.equal(yield tryCatchNext(), 167, 'yield next val')
   }).catch(t.error)
 })
 
