@@ -22,6 +22,7 @@ function isObservable (val) {
 function _caco (genFn, args) {
   var self = this
   var done = false
+  var nextQ = []
   var callback
 
   // pass caco next to generator function
@@ -57,10 +58,14 @@ function _caco (genFn, args) {
   }
 
   // callback stepper with nextTick delay
+  // nextQ to guarantee ordering
   function next () {
     var args = Array.prototype.slice.call(arguments)
+    nextQ.push(args)
     process.nextTick(function () {
-      step.apply(self, args)
+      while (nextQ.length) {
+        step.apply(self, nextQ.shift())
+      }
     })
   }
 
