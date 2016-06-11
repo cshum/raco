@@ -21,8 +21,7 @@ function isObservable (val) {
  */
 function _caco (genFn, args) {
   var self = this
-  var done = false
-  var nextQ = []
+  var ticking = false
   var callback
 
   // pass caco next to generator function
@@ -34,10 +33,7 @@ function _caco (genFn, args) {
   // callback stepper
   function step (err, val) {
     if (!iter) {
-      if (!done) {
-        done = true
-        callback.apply(self, arguments)
-      }
+      callback.apply(self, arguments)
     } else {
       // generator step
       try {
@@ -51,22 +47,25 @@ function _caco (genFn, args) {
         if (!isYieldable && !iter) next(null, state.value)
       } catch (err) {
         // catch err, break iteration
-        done = true
         callback.call(self, err)
       }
     }
   }
 
   // callback stepper with nextTick delay
-  // nextQ to guarantee ordering
   function next () {
     var args = Array.prototype.slice.call(arguments)
-    nextQ.push(args)
-    process.nextTick(function () {
-      while (nextQ.length) {
-        step.apply(self, nextQ.shift())
-      }
-    })
+    if (!ticking) {
+      ticking = true
+      process.nextTick(function () {
+        ticking = false
+        step.apply(self, args)
+      })
+    } else {
+      // if another next() called during pausing,
+      // break iter and callback
+      iter = null
+    }
   }
 
   if (callback) {
