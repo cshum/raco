@@ -21,6 +21,7 @@ function isObservable (val) {
  */
 function _caco (genFn, args) {
   var self = this
+  var done = false
   var ticking = false
   var callback
 
@@ -33,7 +34,10 @@ function _caco (genFn, args) {
   // callback stepper
   function step (err, val) {
     if (!iter) {
-      callback.apply(self, arguments)
+      if (!done) {
+        done = true
+        callback.apply(self, arguments)
+      }
     } else {
       // generator step
       try {
@@ -47,6 +51,7 @@ function _caco (genFn, args) {
         if (!isYieldable && !iter) next(null, state.value)
       } catch (err) {
         // catch err, break iteration
+        done = true
         callback.call(self, err)
       }
     }

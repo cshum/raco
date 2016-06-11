@@ -38,6 +38,7 @@ caco(function * (next) {
   // yield callback of form next(err, data): return data, throw if err exists
   var data = yield fs.readFile('./foo/bar', next) 
 
+  ...
 }).catch(function (err) {
   // handle uncaught error
 })
