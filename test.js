@@ -183,10 +183,10 @@ test('wrapAll', function (t) {
 })
 
 function cbRes (timeout, res, cb) {
-  setTimeout(cb.bind(null, null, res), timeout)
+  setTimeout(cb, timeout, null, res)
 }
 function cbErr (timeout, err, cb) {
-  setTimeout(cb.bind(null, err), timeout)
+  setTimeout(cb, timeout, err)
 }
 
 test('next.push() and next.all()', function (t) {

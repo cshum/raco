@@ -86,6 +86,50 @@ app.fn(function (err, val) {...})
 app.fn2().then(...).catch(...)
 ```
 
+#### `next.push()`, `next.all()`
+
+caco also provides a simple mechanism to maintain parallel callbacks:
+
+* `next.push()` a callback into a parallel queue.
+
+* `yield next.all()` aggregates callback result into an Array, 
+following the sequence of `next.push()` being called. 
+This also resets the parallel queue.
+
+```js
+var caco = require('caco')
+
+function asyncFn = function (val, cb) {
+  setTimeout(cb, Math.random() * 100, null, val)
+}
+function asyncFnErr = function (err, cb) {
+  setTimeout(cb, Math.random() * 100, err)
+}
+
+caco(function * (next) {
+  asyncFn(1, next.push())
+  asyncFn(2, next.push())
+  asyncFn(3, next.push())
+  console.log(yield next.all()) // [1, 2, 3] 
+
+  asyncFn(4, next.push())
+  asyncFn(5, next.push())
+  console.log(yield next.all()) // [4, 5] 
+
+  asyncFn(6, next.push())
+  asyncFnErr(new Error('boom'), next.push())
+  asyncFn(8, next.push())
+  asyncFn(9, next.push())
+  try {
+    yield next.all()
+  } catch (err) {
+    console.log(err.message) // 'boom'
+  }
+}).catch(function (err) {
+ // handle uncaught error
+})
+```
+
 ## Yieldable
 
 By default, the following objects are considered yieldable:
@@ -134,33 +178,6 @@ caco(function * () {
   // handle uncaught error
 })
 
-```
-
-## Aggregated Yield
-
-Multiple results can be aggregated in one `yield` by using `Promise.all` or [callback-all](https://github.com/cshum/callback-all).
-
-```js
-var caco = require('caco')
-var cball = require('callback-all')
-
-caco(function * (next) {
-  // Promise.all
-  var promises = [
-    asyncFn1(), // foo
-    asyncFn2() // bar
-  ]
-  console.log(yield Promise.all(promises)) // ['foo', 'bar']
-
-  // callback-all
-  var all = cball()
-  asyncFn1(all()) // foo
-  asyncFn2(all()) // bar
-  console.log(yield all(next)) // ['foo', 'bar']
-
-}).catch(function (err) {
- // handle uncaught error
-})
 ```
 
 ## License
