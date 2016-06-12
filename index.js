@@ -1,4 +1,5 @@
 var isGeneratorFunction = require('is-generator-function')
+var cball = require('callback-all')
 
 function isGenerator (val) {
   return val && typeof val.next === 'function' && typeof val.throw === 'function'
@@ -23,7 +24,8 @@ function _caco (genFn, args) {
   var self = this
   var done = false
   var ticking = false
-  var callback
+  var parallel = null
+  var callback = null
 
   // pass caco next to generator function
   if (typeof args[args.length - 1] === 'function') callback = args.pop()
@@ -67,10 +69,20 @@ function _caco (genFn, args) {
         step.apply(self, args)
       })
     } else {
-      // if another next() called during pausing,
+      // if another next() called during ticking,
       // break iter and callback
       iter = null
     }
+  }
+
+  next.push = function () {
+    parallel = parallel || cball()
+    return parallel()
+  }
+
+  next.all = function () {
+    parallel(next)
+    parallel = null
   }
 
   if (callback) {

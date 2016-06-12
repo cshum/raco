@@ -182,3 +182,43 @@ test('wrapAll', function (t) {
   obj.genFn().catch(t.error)
 })
 
+function cbRes (timeout, res, cb) {
+  setTimeout(cb.bind(null, null, res), timeout)
+}
+function cbErr (timeout, err, cb) {
+  setTimeout(cb.bind(null, err), timeout)
+}
+
+test('next.push() and next.all()', function (t) {
+  t.plan(3)
+
+  caco(function * (next) {
+    cbRes(20, 1, next.push())
+    cbRes(10, 2, next.push())
+    cbRes(30, 3, next.push())
+    cbRes(0, 4, next.push())
+    t.deepEqual(
+      yield next.all(),
+      [1, 2, 3, 4],
+      'push and all'
+    )
+    cbRes(20, 6, next.push())
+    cbRes(10, 7, next.push())
+    cbRes(30, 8, next.push())
+    t.deepEqual(
+      yield next.all(),
+      [6, 7, 8],
+      'push and all multiple'
+    )
+  }).catch(t.error)
+
+  caco(function * (next) {
+    cbRes(20, 1, next.push())
+    cbErr(10, 2, next.push())
+    cbRes(30, 3, next.push())
+    cbErr(0, 4, next.push())
+    yield next.all()
+  }).then(t.error).catch(function (err) {
+    t.equal(4, err, 'push and all error')
+  })
+})
