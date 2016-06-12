@@ -1,6 +1,6 @@
 # caco
 
-Generator based control flow that supports both callbacks and promises.
+Generator based flow-control that supports both callback and promise.
 
 [![Build Status](https://travis-ci.org/cshum/caco.svg?branch=master)](https://travis-ci.org/cshum/caco)
 
@@ -9,17 +9,19 @@ npm install caco
 ```
 
 Many existing flow-control libraries such as [co](https://github.com/tj/co), assume promises to be the lowest denominator of async handling.
-Callback functions require promisify to be compatible, which creates unnecessary complication. 
+Callback function requires promisify patch to be compatible, 
+which creates unnecessary complication. 
 
 In caco, both callbacks and promises are yieldable.
-Resulting function can also be used by both callbacks and promises.
+Resulting function can be called by both callbacks and promises.
 This enables a powerful control flow while maintaining simplicity.
 
 #### `caco(fn*, cb)`
 #### `caco(fn*).then(...).catch(...)`
 
 Resolves a generator function.
-Accepts optional arguments and callback, or returns a promise if callback not exists.
+Accepts optional arguments and callback. 
+Returns a promise if callback not exists.
 
 ```js
 var caco = require('caco')
@@ -45,9 +47,10 @@ caco(function * (next) {
 
 ```
 
-Yieldable callback works by supplying an additional `next` argument. Yielding non-yieldable value pauses the current generator. 
-Until `next(err, val)` being invoked by callback, 
-where `val` passes back to yielded value, or `throw` if `err` exists.
+Yieldable callback works by supplying an additional `next` argument. 
+Yielding non-yieldable value pauses the current generator, 
+until `next(err, val)` being invoked by callback.
+`val` passes back to yielded value, or `throw` if `err` exists.
 
 #### `var fn = caco.wrap(fn*)`
 
@@ -88,12 +91,10 @@ app.fn2().then(...).catch(...)
 
 #### `next.push()`, `next.all()`
 
-caco also provides a simple mechanism to maintain parallel callbacks:
+caco provides a parallel mechanism to aggregate callbacks:
 
 * `next.push()` a callback into a parallel queue.
-* `yield next.all()` aggregates callback result into an Array, 
-following the sequence of `next.push()` being called. 
-This also resets the parallel queue.
+* `yield next.all()` aggregates callback result into an array, also resets the parallel queue.
 
 ```js
 var caco = require('caco')
