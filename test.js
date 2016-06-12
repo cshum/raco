@@ -190,9 +190,10 @@ function cbErr (timeout, err, cb) {
 }
 
 test('next.push() and next.all()', function (t) {
-  t.plan(3)
+  t.plan(5)
 
   caco(function * (next) {
+    t.deepEqual(yield next.all(), [], 'next.all() empty')
     cbRes(20, 1, next.push())
     cbRes(10, 2, next.push())
     cbRes(30, 3, next.push())
@@ -210,6 +211,7 @@ test('next.push() and next.all()', function (t) {
       [6, 7, 8],
       'push and all multiple'
     )
+    t.deepEqual(yield next.all(), [], 'next.all() empty')
   }).catch(t.error)
 
   caco(function * (next) {

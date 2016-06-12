@@ -24,7 +24,7 @@ function _caco (genFn, args) {
   var self = this
   var done = false
   var ticking = false
-  var parallel = null
+  var parallel = cball()
   var callback = null
 
   // pass caco next to generator function
@@ -76,13 +76,12 @@ function _caco (genFn, args) {
   }
 
   next.push = function () {
-    parallel = parallel || cball()
     return parallel()
   }
 
   next.all = function () {
     parallel(next)
-    parallel = null
+    parallel = cball() // reset parallel
   }
 
   if (callback) {
