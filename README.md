@@ -91,7 +91,6 @@ app.fn2().then(...).catch(...)
 caco also provides a simple mechanism to maintain parallel callbacks:
 
 * `next.push()` a callback into a parallel queue.
-
 * `yield next.all()` aggregates callback result into an Array, 
 following the sequence of `next.push()` being called. 
 This also resets the parallel queue.
