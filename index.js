@@ -14,20 +14,20 @@ function isObservable (val) {
 }
 
 /**
- * internal caco resolver
+ * internal raco resolver
  *
  * @param {function*} genFn - generator function
  * @param {array} args - arguments in real array form
  * @returns {promise} if no callback provided
  */
-function _caco (genFn, args) {
+function _raco (genFn, args) {
   var self = this
   var done = false
   var ticking = false
   var parallel = null
   var callback = null
 
-  // pass caco next to generator function
+  // pass raco next to generator function
   if (typeof args[args.length - 1] === 'function') callback = args.pop()
   args.push(next)
 
@@ -47,7 +47,7 @@ function _caco (genFn, args) {
         if (state.done) iter = null
 
         // resolve yieldable
-        var isYieldable = caco._yieldable(state.value, step)
+        var isYieldable = raco._yieldable(state.value, step)
 
         // next if generator returned non-yieldable
         if (!isYieldable && !iter) next(null, state.value)
@@ -101,15 +101,15 @@ function _caco (genFn, args) {
 }
 
 /**
- * caco resolver
+ * raco resolver
  *
  * @param {function*} genFn - generator function
  * @param {...*} args - optional arguments
  * @returns {promise} if no callback provided
  */
-function caco (genFn) {
+function raco (genFn) {
   var args = Array.prototype.slice.call(arguments, 1)
-  return _caco.call(this, genFn, args)
+  return _raco.call(this, genFn, args)
 }
 
 /**
@@ -119,7 +119,7 @@ function caco (genFn) {
  * @param {function} cb - resolver callback function
  * @returns {boolean} acknowledge yieldable
  */
-caco._yieldable = function (val, cb) {
+raco._yieldable = function (val, cb) {
   if (isPromise(val)) {
     val.then(function (value) {
       cb(null, value)
@@ -128,7 +128,7 @@ caco._yieldable = function (val, cb) {
     })
     return true
   } else if (isGenerator(val)) {
-    caco(val, cb)
+    raco(val, cb)
     return true
   } else if (isObservable(val)) {
     var dispose = val.subscribe(function (val) {
@@ -151,29 +151,29 @@ caco._yieldable = function (val, cb) {
  * @param {function*} genFn - generator function
  * @returns {function} regular function
  */
-caco.wrap = function (genFn) {
+raco.wrap = function (genFn) {
   return function () {
     var args = Array.prototype.slice.call(arguments)
-    return _caco.call(this, genFn, args)
+    return _raco.call(this, genFn, args)
   }
 }
 
 /**
  * wraps generator function properties of object
  *
- * @param {object} obj - object to caco.wrap
+ * @param {object} obj - object to raco.wrap
  * @returns {object} original object
  */
-caco.wrapAll = function (obj) {
+raco.wrapAll = function (obj) {
   for (var key in obj) {
     if (
       obj.hasOwnProperty(key) &&
       (isGeneratorFunction(obj[key]) || isGenerator(obj[key]))
     ) {
-      obj[key] = caco.wrap(obj[key])
+      obj[key] = raco.wrap(obj[key])
     }
   }
   return obj
 }
 
-module.exports = caco
+module.exports = raco

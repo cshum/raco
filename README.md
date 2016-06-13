@@ -1,32 +1,32 @@
-# caco
+# raco
 
 Generator based flow-control that supports both callback and promise.
 
-[![Build Status](https://travis-ci.org/cshum/caco.svg?branch=master)](https://travis-ci.org/cshum/caco)
+[![Build Status](https://travis-ci.org/cshum/raco.svg?branch=master)](https://travis-ci.org/cshum/raco)
 
 ```bash
-npm install caco
+npm install raco
 ```
 
 Many existing flow-control libraries such as [co](https://github.com/tj/co), assume promises to be the lowest denominator of async handling.
 Callback function requires promisify patch to be compatible, 
 which creates unnecessary complication. 
 
-In caco, both callbacks and promises are yieldable.
+In raco, both callbacks and promises are yieldable.
 Resulting function can be called by both callbacks and promises.
 This enables a powerful control flow while maintaining simplicity.
 
-#### `caco(fn*, cb)`
-#### `caco(fn*).then(...).catch(...)`
+#### `raco(fn*, cb)`
+#### `raco(fn*).then(...).catch(...)`
 
 Resolves a generator function.
 Accepts optional arguments and callback. 
 Returns a promise if callback not exists.
 
 ```js
-var caco = require('caco')
+var raco = require('raco')
 
-caco(function * (next) {
+raco(function * (next) {
   try {
     yield Promise.reject('boom') // yield promise reject throws error
   } catch (err) {
@@ -52,12 +52,12 @@ Yielding non-yieldable value pauses the current generator,
 until `next(err, val)` being invoked by callback.
 `val` passes back to yielded value, or `throw` if `err` exists.
 
-#### `var fn = caco.wrap(fn*)`
+#### `var fn = raco.wrap(fn*)`
 
 Wraps a generator function into regular function that optionally accepts callback or returns a promise.
 
 ```js
-var fn = caco.wrap(function * (arg1, arg2, next) {
+var fn = raco.wrap(function * (arg1, arg2, next) {
   yield setTimeout(next, 1000) // yield callback using 'next'
 
   return yield Promise.resolve(arg1 + arg2)
@@ -70,7 +70,7 @@ fn(167, 689) // use with promise
   .catch(function (err) { ... })
 ```
 
-#### `caco.wrapAll(obj)`
+#### `raco.wrapAll(obj)`
 
 Wraps generator function properties of object:
 
@@ -81,7 +81,7 @@ App.prototype.fn = function * (next) {...}
 App.prototype.fn2 = function * (next) {...}
 
 // wrap prototype object
-caco.wrapAll(App.prototype)
+raco.wrapAll(App.prototype)
 
 var app = new App()
 
@@ -91,13 +91,13 @@ app.fn2().then(...).catch(...)
 
 #### `next.push()`, `next.all()`
 
-caco provides a parallel mechanism to aggregate callbacks:
+raco provides a parallel mechanism to aggregate callbacks:
 
 * `next.push()` a callback into a parallel queue.
 * `yield next.all()` aggregates callback result into an array, also resets the parallel queue.
 
 ```js
-var caco = require('caco')
+var raco = require('raco')
 
 function asyncFn = function (val, cb) {
   setTimeout(cb, Math.random() * 100, null, val)
@@ -106,7 +106,7 @@ function asyncFnErr = function (err, cb) {
   setTimeout(cb, Math.random() * 100, err)
 }
 
-caco(function * (next) {
+raco(function * (next) {
   asyncFn(1, next.push())
   asyncFn(2, next.push())
   asyncFn(3, next.push())
@@ -140,10 +140,10 @@ By default, the following objects are considered yieldable:
 It is also possible to override the yieldable mapper, 
 so that one can yield pretty much anything.
 
-#### `caco._yieldable = function (val, cb) { }`
+#### `raco._yieldable = function (val, cb) { }`
 
 ```js
-caco._yieldable = function (val, cb) {
+raco._yieldable = function (val, cb) {
   // map array to Promise.all
   if (Array.isArray(val)) {
     Promise.all(val).then(function (res) {
@@ -161,7 +161,7 @@ caco._yieldable = function (val, cb) {
   return false // acknowledge non-yieldable
 }
 
-caco(function * () {
+raco(function * () {
   console.log(yield [
     Promise.resolve(1),
     Promise.resolve(2),

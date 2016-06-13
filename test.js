@@ -1,11 +1,11 @@
 var test = require('tape')
-var caco = require('./')
+var raco = require('./')
 var Observable = require('rx').Observable
 
 test('arguments and callback return', function (t) {
   t.plan(10)
 
-  var fn = caco.wrap(function * (num, str, next) {
+  var fn = raco.wrap(function * (num, str, next) {
     t.equal(num, 167, 'arguemnt')
     t.equal(str, '167', 'arguemnt')
     t.equal(typeof next, 'function', 'stepping function')
@@ -38,7 +38,7 @@ test('scope', function (t) {
 
   var obj = {}
 
-  caco.wrap(function * () {
+  raco.wrap(function * () {
     t.equal(this, obj, 'correct scope')
     t.end()
   }).call(obj)
@@ -48,14 +48,14 @@ test('resolve and reject', function (t) {
   t.plan(6)
 
   // callback
-  caco(function * () {
+  raco(function * () {
     return yield Promise.resolve(167)
   }, function (err, val) {
     t.error(err)
     t.equal(val, 167, 'callback value')
   })
 
-  caco(function * () {
+  raco(function * () {
     return Promise.reject(167)
   }, function (err, val) {
     t.equal(err, 167, 'callback error')
@@ -63,13 +63,13 @@ test('resolve and reject', function (t) {
   })
 
   // promise
-  caco(function * () {
+  raco(function * () {
     return 167
   }).then(function (val) {
     t.equal(val, 167, 'promise resolve')
   }, t.error)
 
-  caco(function * () {
+  raco(function * () {
     throw new Error('167')
   }).then(t.error, function (err) {
     t.equal(err.message, '167', 'promise reject')
@@ -82,13 +82,13 @@ test('yieldable', function (t) {
   function * resolveGen (n) {
     return yield Promise.resolve(n)
   }
-  var rejectFn = caco.wrap(function * (n) {
+  var rejectFn = raco.wrap(function * (n) {
     return Promise.reject(n)
   })
   var instantCb = function (cb) {
     cb(null, 1044)
   }
-  var tryCatch = caco.wrap(function * () {
+  var tryCatch = raco.wrap(function * () {
     try {
       return yield rejectFn(689)
     } catch (err) {
@@ -96,7 +96,7 @@ test('yieldable', function (t) {
       return yield resolveGen(167)
     }
   })
-  var tryCatchNext = caco.wrap(function * (next) {
+  var tryCatchNext = raco.wrap(function * (next) {
     try {
       return yield next(689)
     } catch (err) {
@@ -111,7 +111,7 @@ test('yieldable', function (t) {
       .delay(10)
       .toArray()
   }
-  caco(function * (next) {
+  raco(function * (next) {
     yield setTimeout(next, 0)
     t.deepEqual(yield observ(), [1, 2, 3], 'yield observable')
     t.equal(yield instantCb(next), 1044, 'yield callback')
@@ -123,8 +123,8 @@ test('yieldable', function (t) {
 test('override yieldable', function (t) {
   t.plan(2)
 
-  var orig = caco._yieldable
-  caco._yieldable = function (val, cb) {
+  var orig = raco._yieldable
+  raco._yieldable = function (val, cb) {
     // yield array
     if (Array.isArray(val)) {
       Promise.all(val).then(function (res) {
@@ -141,7 +141,7 @@ test('override yieldable', function (t) {
     }
   }
 
-  caco(function * () {
+  raco(function * () {
     t.deepEqual(yield [
       Promise.resolve(1),
       Promise.resolve(2),
@@ -152,7 +152,7 @@ test('override yieldable', function (t) {
       yield 689
     } catch (err) {
       t.equal(err.message, 'DLLM', 'yield 689 throws error')
-      caco._yieldable = orig
+      raco._yieldable = orig
     }
   }).catch(t.error)
 })
@@ -174,9 +174,9 @@ test('wrapAll', function (t) {
       }
     }
   }
-  t.equal(caco.wrapAll(obj), obj, 'mutuable')
-  t.equal(obj.test, 'foo', 'ignore non caco')
-  t.equal(obj.fn, fn, 'ignore non caco')
+  t.equal(raco.wrapAll(obj), obj, 'mutuable')
+  t.equal(obj.test, 'foo', 'ignore non raco')
+  t.equal(obj.fn, fn, 'ignore non raco')
   t.notOk(obj.gen === gen, 'wrap generator')
   t.notOk(obj.genFn === fn, 'wrap generator function')
   obj.genFn().catch(t.error)
@@ -192,7 +192,7 @@ function cbErr (timeout, err, cb) {
 test('next.push() and next.all()', function (t) {
   t.plan(5)
 
-  caco(function * (next) {
+  raco(function * (next) {
     t.deepEqual(yield next.all(), [], 'next.all() empty')
     cbRes(20, 1, next.push())
     cbRes(10, 2, next.push())
@@ -214,7 +214,7 @@ test('next.push() and next.all()', function (t) {
     t.deepEqual(yield next.all(), [], 'next.all() empty')
   }).catch(t.error)
 
-  caco(function * (next) {
+  raco(function * (next) {
     cbRes(20, 1, next.push())
     cbErr(10, 2, next.push())
     cbRes(30, 3, next.push())
