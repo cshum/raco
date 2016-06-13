@@ -33,7 +33,12 @@ function _raco (genFn, args) {
 
   var iter = isGenerator(genFn) ? genFn : genFn.apply(self, args)
 
-  // callback stepper
+  /**
+   * internal callback stepper
+   *
+   * @param {*} err - callback error object
+   * @param {...*} val - callback value(s)
+   */
   function step (err, val) {
     if (!iter) {
       if (!done) {
@@ -59,7 +64,12 @@ function _raco (genFn, args) {
     }
   }
 
-  // callback stepper with nextTick delay
+  /**
+   * next, callback stepper with nextTick
+   *
+   * @param {*} err - callback error object
+   * @param {...*} val - callback value(s)
+   */
   function next () {
     var args = Array.prototype.slice.call(arguments)
     if (!ticking) {
@@ -75,15 +85,23 @@ function _raco (genFn, args) {
     }
   }
 
+  /**
+   * next.push parallel callback queue
+   *
+   * @returns {function} callback function (err, val)
+   */
   next.push = function () {
     parallel = parallel || cball()
     return parallel()
   }
 
+  /**
+   * next.all parallel callback values aggregation and resets queue
+   */
   next.all = function () {
     if (!parallel) return next(null, [])
     parallel(next)
-    parallel = cball() // reset parallel
+    parallel = null // reset parallel
   }
 
   if (callback) {
