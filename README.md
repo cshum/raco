@@ -25,22 +25,21 @@ Returns a promise if callback not exists.
 
 ```js
 var raco = require('raco')
-
+...
 raco(function * (next) {
+  // yield promise
+  console.log(yield Promise.resolve('foo')) // 'foo'
   try {
-    yield Promise.reject('boom') // yield promise reject throws error
+    yield Promise.reject('boom')
   } catch (err) {
     console.log(err) // 'boom'
   }
 
-  var foo = yield Promise.resolve('bar') // yield promise
+  // yield callback
+  yield setTimeout(next, 1000) // delay 1 second
+  var data = yield fs.readFile('./data', next)  
+  var buf = crypto.randomBytes(48, next)
 
-  yield setTimeout(next, 1000) // yield callback using 'next' argument, delay 1 second
-
-  // yield callback of form next(err, data): return data, throw if err exists
-  var data = yield fs.readFile('./foo/bar', next) 
-
-  ...
 }).catch(function (err) {
   // handle uncaught error
 })
@@ -52,15 +51,26 @@ Yielding non-yieldable value pauses the current generator,
 until `next(err, val)` being invoked by callback.
 `val` passes back to yielded value, or `throw` if `err` exists.
 
+```js
+raco(function * (next) {
+  console.log(yield next(null, 'foo')) // 'foo'
+  try {
+    yield next(new Error('boom'))
+  } catch (err) {
+    console.log(err.message) // 'boom'
+  }
+})
+```
+
 #### `var fn = raco.wrap(fn*)`
 
 Wraps a generator function into regular function that optionally accepts callback or returns a promise.
 
 ```js
 var fn = raco.wrap(function * (arg1, arg2, next) {
-  yield setTimeout(next, 1000) // yield callback using 'next'
-
-  return yield Promise.resolve(arg1 + arg2)
+  // pass arguments followed by `next`
+  ...
+  return arg1 + arg2
 })
 
 fn(167, 199, function (err, val) { ... }) // Use with callback
@@ -93,7 +103,7 @@ app.fn2().then(...).catch(...)
 
 raco provides a parallel mechanism to aggregate callbacks:
 
-* `next.push()` a callback into a parallel queue.
+* `next.push()` returns a callback function that pushes to parallel queue in order.
 * `yield next.all()` aggregates callback result into an array, also resets the parallel queue.
 
 ```js
