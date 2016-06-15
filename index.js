@@ -99,9 +99,13 @@ function _raco (genFn, args) {
    * next.all parallel callback values aggregation and resets queue
    */
   next.all = function () {
-    if (!parallel) return next(null, [])
-    parallel(next)
-    parallel = null // reset parallel
+    if (!parallel) {
+      // resolve empty array if not initiated
+      return next(null, [])
+    } else {
+      parallel(next)
+      parallel = null // reset parallel
+    }
   }
 
   if (callback) {
