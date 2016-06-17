@@ -39,7 +39,11 @@ raco(function * (next) {
   yield setTimeout(next, 1000) // delay 1 second
   var data = yield fs.readFile('./data', next)  
   var buf = crypto.randomBytes(48, next)
-
+  yield pump(
+    fs.createReadStream('./foo'),
+    fs.createWriteStream('./bar'),
+    next
+  )
 }).catch(function (err) {
   // handle uncaught error
 })
@@ -59,6 +63,8 @@ raco(function * (next) {
   } catch (err) {
     console.log(err.message) // 'boom'
   }
+}).catch(function (err) {
+  // handle uncaught error
 })
 ```
 
