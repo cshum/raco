@@ -155,10 +155,11 @@ By default, the following objects are considered yieldable:
 * Observable
 * Thunk
 
-It is also possible to override the yieldable mapper, 
-so that one can yield pretty much anything.
-
 #### `raco._yieldable = function (val, cb) { }`
+
+It is also possible to override the default yieldable mapper. Use with caution:
+* Takes the yielded value, returns `true` to acknowledge yieldable.
+* Callback`cb(err, val)` to resolve the yieldable.
 
 ```js
 raco._yieldable = function (val, cb) {
