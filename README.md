@@ -105,12 +105,13 @@ app.fn(function (err, val) {...})
 app.fn2().then(...).catch(...)
 ```
 
-#### `next.push()`, `next.all()`
+## Parallel Callbacks
 
 raco provides a parallel mechanism to aggregate callbacks:
 
-* `next.push()` returns a callback function that pushes to parallel queue, ordered.
-* `yield next.all()` aggregates callbacks result into an array, also resets the parallel queue.
+* `next.push()` returns a callback function that pushes to parallel list, ordered.
+* `yield next.all()` aggregates callbacks result into an array, also resets the parallel list.
+* `next.clear()` clear/initialize parallel list
 
 ```js
 var raco = require('raco')
@@ -125,9 +126,10 @@ function asyncFnErr = function (err, cb) {
 raco(function * (next) {
   asyncFn(1, next.push())
   asyncFn(2, next.push())
-  asyncFn(3, next.push())
-  console.log(yield next.all()) // [1, 2, 3] 
+  console.log(yield next.all()) // [1, 2] 
 
+  asyncFn(3, next.push())
+  next.clear() // clear list
   asyncFn(4, next.push())
   asyncFn(5, next.push())
   console.log(yield next.all()) // [4, 5] 
@@ -146,7 +148,7 @@ raco(function * (next) {
 })
 ```
 
-## Yieldable
+## Yieldables
 
 By default, the following objects are considered yieldable:
 * Promise

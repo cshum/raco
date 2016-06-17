@@ -87,6 +87,13 @@ function _raco (genFn, args) {
   }
 
   /**
+   * clear parallel queue
+   */
+  next.clear = function () {
+    parallel = null
+  }
+
+  /**
    * next.push parallel callback queue
    *
    * @returns {function} callback function (err, val)
@@ -102,7 +109,7 @@ function _raco (genFn, args) {
   next.all = function () {
     if (!parallel) {
       // resolve empty array if not initiated
-      return next(null, [])
+      next(null, [])
     } else {
       parallel(next)
       parallel = null // reset parallel

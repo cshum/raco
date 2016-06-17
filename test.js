@@ -208,11 +208,12 @@ test('next.push() and next.all()', function (t) {
       'push and all'
     )
     cbRes(20, 6, next.push())
+    next.clear()
     cbRes(10, 7, next.push())
     cbRes(30, 8, next.push())
     t.deepEqual(
       yield next.all(),
-      [6, 7, 8],
+      [7, 8],
       'push and all multiple'
     )
     t.deepEqual(yield next.all(), [], 'next.all() empty')
