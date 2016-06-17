@@ -39,6 +39,7 @@ raco(function * (next) {
   yield setTimeout(next, 1000) // delay 1 second
   var data = yield fs.readFile('./data', next)  
   var buf = crypto.randomBytes(48, next)
+  yield mkdirp('/tmp/foo/bar', next)
   yield pump(
     fs.createReadStream('./foo'),
     fs.createWriteStream('./bar'),
@@ -47,7 +48,6 @@ raco(function * (next) {
 }).catch(function (err) {
   // handle uncaught error
 })
-
 ```
 
 Yieldable callback works by supplying an additional `next` argument. 
@@ -109,8 +109,8 @@ app.fn2().then(...).catch(...)
 
 raco provides a parallel mechanism to aggregate callbacks:
 
-* `next.push()` returns a callback function that pushes to parallel queue in order.
-* `yield next.all()` aggregates callback result into an array, also resets the parallel queue.
+* `next.push()` returns a callback function that pushes to parallel queue, ordered.
+* `yield next.all()` aggregates callbacks result into an array, also resets the parallel queue.
 
 ```js
 var raco = require('raco')
@@ -149,9 +149,11 @@ raco(function * (next) {
 ## Yieldable
 
 By default, the following objects are considered yieldable:
-* `Promise`
-* `Observable`
-* `Generator`
+* Promise
+* Generator
+* Generator Function
+* Observable
+* Thunk
 
 It is also possible to override the yieldable mapper, 
 so that one can yield pretty much anything.

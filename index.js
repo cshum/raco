@@ -1,14 +1,15 @@
 var isGeneratorFunction = require('is-generator-function')
 var cball = require('callback-all')
 
+function isFunction (val) {
+  return typeof val === 'function'
+}
 function isGenerator (val) {
   return val && typeof val.next === 'function' && typeof val.throw === 'function'
 }
-
 function isPromise (val) {
   return val && typeof val.then === 'function'
 }
-
 function isObservable (val) {
   return val && typeof val.subscribe === 'function'
 }
@@ -28,7 +29,7 @@ function _raco (genFn, args) {
   var callback = null
 
   // pass raco next to generator function
-  if (typeof args[args.length - 1] === 'function') callback = args.pop()
+  if (isFunction(args[args.length - 1])) callback = args.pop()
   args.push(next)
 
   var iter = isGenerator(genFn) ? genFn : genFn.apply(self, args)
@@ -143,16 +144,23 @@ function raco (genFn) {
  */
 raco._yieldable = function (val, cb) {
   if (isPromise(val)) {
+    // Promise
     val.then(function (value) {
       cb(null, value)
     }, function (err) {
       cb(err || new Error())
     })
     return true
-  } else if (isGenerator(val)) {
+  } else if (isGeneratorFunction(val) || isGenerator(val)) {
+    // Generator
     raco(val, cb)
     return true
+  } else if (isFunction(val)) {
+    // Thunk
+    val(cb)
+    return true
   } else if (isObservable(val)) {
+    // Observable
     var dispose = val.subscribe(function (val) {
       cb(null, val)
       dispose.dispose()
@@ -162,6 +170,7 @@ raco._yieldable = function (val, cb) {
     })
     return true
   } else {
+    // Not yieldable
     return false
   }
 }

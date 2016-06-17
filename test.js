@@ -77,7 +77,7 @@ test('resolve and reject', function (t) {
 })
 
 test('yieldable', function (t) {
-  t.plan(6)
+  t.plan(7)
 
   function * resolveGen (n) {
     return yield Promise.resolve(n)
@@ -111,8 +111,12 @@ test('yieldable', function (t) {
       .delay(10)
       .toArray()
   }
+
   raco(function * (next) {
     yield setTimeout(next, 0)
+    t.equal(yield function * (next) {
+      return yield next(null, 'foo')
+    }, 'foo', 'yield generator function')
     t.deepEqual(yield observ(), [1, 2, 3], 'yield observable')
     t.equal(yield instantCb(next), 1044, 'yield callback')
     t.equal(yield tryCatch(), 167, 'yield gnerator-promise')
