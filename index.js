@@ -120,7 +120,7 @@ function _raco (genFn, args) {
     step()
   } else {
     // return promise if no callback
-    return new Promise(function (resolve, reject) {
+    return new raco.Promise(function (resolve, reject) {
       callback = function (err, val) {
         if (err) return reject(err)
         resolve(val)
@@ -141,6 +141,13 @@ function raco (genFn) {
   var args = Array.prototype.slice.call(arguments, 1)
   return _raco.call(this, genFn, args)
 }
+
+/**
+ * Promise constructor of raco,
+ * use native Promise by default
+ *
+ */
+raco.Promise = global.Promise
 
 /**
  * yieldable callback mapper
