@@ -110,13 +110,13 @@ app.fn2().then(...).catch(...)
 raco provides a parallel mechanism to aggregate callbacks:
 
 ##### `cb = next.push()`
-Returns a callback function that pushes to parallel list, ordered.
+Returns a callback handling function that aggregates result in sequence.
 ##### `yield next.all()`
-Aggregates callbacks result into an array. Throws if error exists. Also resets the parallel list.
+Aggregates callbacks values into an array. Throws if error exists. Also resets the parallel list.
 ##### `yield next.any()`
 Returns if any callback resolved, otherwise throws error. Also resets the parallel list.
 ##### `next.clear()`
-Clear/initialize parallel list
+Resets parallel list.
 
 ```js
 var raco = require('raco')
