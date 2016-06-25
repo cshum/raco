@@ -109,9 +109,14 @@ app.fn2().then(...).catch(...)
 
 raco provides a parallel mechanism to aggregate callbacks:
 
-* `next.push()` returns a callback function that pushes to parallel list, ordered.
-* `yield next.all()` aggregates callbacks result into an array, also resets the parallel list.
-* `next.clear()` clear/initialize parallel list
+#### `cb = next.push()`
+Returns a callback function that pushes to parallel list, ordered.
+#### `yield next.all()`
+Aggregates callbacks result into an array. Throws if error exists. Also resets the parallel list.
+#### `yield next.any()`
+Returns if any callback resolved, otherwise throws error. Also resets the parallel list.
+#### `next.clear()`
+Clear/initialize parallel list
 
 ```js
 var raco = require('raco')
@@ -124,6 +129,7 @@ function asyncFnErr = function (err, cb) {
 }
 
 raco(function * (next) {
+  // next.all() aggregates callbacks in order
   asyncFn(1, next.push())
   asyncFn(2, next.push())
   console.log(yield next.all()) // [1, 2] 
@@ -134,15 +140,20 @@ raco(function * (next) {
   asyncFn(5, next.push())
   console.log(yield next.all()) // [4, 5] 
 
+  // next.all() throws if any callback error occured
   asyncFn(6, next.push())
   asyncFnErr(new Error('boom'), next.push())
-  asyncFn(8, next.push())
-  asyncFn(9, next.push())
+  asyncFn(7, next.push())
   try {
     yield next.all()
   } catch (err) {
     console.log(err.message) // 'boom'
   }
+
+  // next.any() retuns if any callback resolved
+  asyncFn(8, next.push())
+  asyncFnErr(new Error('boom'), next.push())
+  yield next.any() // 8
 }).catch(function (err) {
  // handle uncaught error
 })

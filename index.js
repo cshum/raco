@@ -107,13 +107,18 @@ function _raco (genFn, args) {
    * next.all parallel callback values aggregation and resets queue
    */
   next.all = function () {
-    if (!parallel) {
-      // resolve empty array if not initiated
-      next(null, [])
-    } else {
-      parallel.all(next)
-      parallel = null // reset parallel
-    }
+    if (!parallel) return next(null, [])
+    parallel.all(next)
+    parallel = null
+  }
+
+  /**
+   * next.all parallel callback values aggregation and resets queue
+   */
+  next.any = function () {
+    if (!parallel) return next(null, null)
+    parallel.any(next)
+    parallel = null
   }
 
   if (callback) {

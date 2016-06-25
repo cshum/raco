@@ -193,8 +193,8 @@ function cbErr (timeout, err, cb) {
   setTimeout(cb, timeout, err)
 }
 
-test('next.push() and next.all()', function (t) {
-  t.plan(5)
+test('next.push(), next.all(), next.any()', function (t) {
+  t.plan(7)
 
   raco(function * (next) {
     t.deepEqual(yield next.all(), [], 'next.all() empty')
@@ -217,15 +217,29 @@ test('next.push() and next.all()', function (t) {
       'push and all multiple'
     )
     t.deepEqual(yield next.all(), [], 'next.all() empty')
-  }).catch(t.error)
 
-  raco(function * (next) {
     cbRes(20, 1, next.push())
     cbErr(10, 2, next.push())
     cbRes(30, 3, next.push())
     cbErr(0, 4, next.push())
-    yield next.all()
-  }).then(t.error).catch(function (err) {
-    t.equal(4, err, 'push and all error')
-  })
+    try {
+      yield next.all()
+    } catch (err) {
+      t.equal(4, err, 'push and all error')
+    }
+
+    cbRes(20, 1, next.push())
+    cbRes(10, 2, next.push())
+    cbRes(30, 3, next.push())
+    cbErr(0, 4, next.push())
+    t.deepEqual(yield next.any(), 2, 'push and any')
+
+    cbErr(10, 1, next.push())
+    cbErr(0, 2, next.push())
+    try {
+      yield next.any()
+    } catch (err) {
+      t.deepEqual(err, 2, 'push and any error')
+    }
+  }).catch(t.error)
 })
