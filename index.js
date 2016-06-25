@@ -1,5 +1,5 @@
 var isGeneratorFunction = require('is-generator-function')
-var cball = require('callback-all')
+var parallels = require('parallels')
 
 function isFunction (val) {
   return typeof val === 'function'
@@ -99,8 +99,8 @@ function _raco (genFn, args) {
    * @returns {function} callback function (err, val)
    */
   next.push = function () {
-    parallel = parallel || cball()
-    return parallel()
+    parallel = parallel || parallels()
+    return parallel.push()
   }
 
   /**
@@ -111,7 +111,7 @@ function _raco (genFn, args) {
       // resolve empty array if not initiated
       next(null, [])
     } else {
-      parallel(next)
+      parallel.all(next)
       parallel = null // reset parallel
     }
   }
