@@ -57,9 +57,15 @@ until `next(err, val)` being invoked by callback.
 
 ```js
 raco(function * (next) {
-  console.log(yield next(null, 'foo')) // 'foo'
+  var res = yield setTimeout(function () { 
+    next(null, 'foo')
+  }, 100)
+  console.log(res) // 'foo'
+
   try {
-    yield next(new Error('boom'))
+    yield setTimeout(function () { 
+      next(new Error('boom'))
+    }, 100)
   } catch (err) {
     console.log(err.message) // 'boom'
   }
