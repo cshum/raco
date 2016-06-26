@@ -74,7 +74,7 @@ raco(function * (next) {
 })
 ```
 
-#### `var fn = raco.wrap(fn*)`
+#### `fn = raco.wrap(fn*)`
 
 Wraps a generator function into regular function that optionally accepts callback or returns a promise.
 
@@ -113,7 +113,7 @@ app.fn2().then(...).catch(...)
 
 ## Parallel Callbacks
 
-raco provides a parallel mechanism to aggregate callbacks:
+raco provides parallel utilities to aggregate callbacks:
 
 ##### `cb = next.push()`
 Returns a callback handling function that aggregates result in sequence.
@@ -156,7 +156,7 @@ raco(function * (next) {
     console.log(err.message) // 'boom'
   }
 
-  // next.any() retuns if any callback resolved
+  // next.any() returns if any callback resolved
   asyncFn(8, next.push())
   asyncFnErr(new Error('boom'), next.push())
   yield next.any() // 8
