@@ -24,6 +24,7 @@ Accepts optional arguments and callback.
 Returns a promise if callback not exists.
 
 ```js
+// import raco
 var raco = require('raco')
 ...
 raco(function * (next) {
@@ -116,6 +117,9 @@ app.fn2().then(...).catch(...)
 Raco uses native promise by default. This can be overridden by setting `raco.Promise`.
 
 ```js
+// import by factory to avoid overriding global
+var raco = require('raco')()
+
 raco.Promise = require('bluebird')
 ```
 
@@ -127,6 +131,9 @@ If `raco.Promise` being unset and callback not provided,
 Any uncaught error will be thrown.
 
 ```js
+// import by factory to avoid overriding global
+var raco = require('raco')()
+
 // unset promise
 raco.Promise = null
 
@@ -205,6 +212,9 @@ It is also possible to override the default yieldable mapper. Use with caution:
 * Callback`cb(err, val)` to resolve the yieldable.
 
 ```js
+// import by factory to avoid overriding global
+var raco = require('raco')()
+
 raco._yieldable = function (val, cb) {
   // map array to Promise.all
   if (Array.isArray(val)) {
