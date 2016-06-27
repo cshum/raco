@@ -44,6 +44,21 @@ test('scope', function (t) {
   }).call(obj)
 })
 
+test('explicit throws', function (t) {
+  t.plan(2)
+  var orig = raco.Promise
+  raco.Promise = null
+  t.throws(raco.wrap(function * () {
+    throw new Error('boom')
+  }), 'boom', 'no callback & promise throws')
+  t.throws(function () {
+    raco(function * () {
+      throw new Error('boom')
+    })
+  }, 'boom', 'no callback & promise throws')
+  raco.Promise = orig
+})
+
 test('resolve and reject', function (t) {
   t.plan(6)
 

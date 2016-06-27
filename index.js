@@ -13,6 +13,7 @@ function isPromise (val) {
 function isObservable (val) {
   return val && typeof val.subscribe === 'function'
 }
+function noop () {}
 
 /**
  * internal raco resolver
@@ -24,6 +25,7 @@ function isObservable (val) {
 function _raco (genFn, args) {
   var self = this
   var done = false
+  var trycatch = true
   var ticking = false
   var parallel = null
   var callback = null
@@ -48,20 +50,25 @@ function _raco (genFn, args) {
       }
     } else {
       // generator step
-      try {
-        var state = err ? iter.throw(err) : iter.next(val)
-        if (state.done) iter = null
-
-        // resolve yieldable
-        var isYieldable = raco._yieldable(state.value, step)
-
-        // next if generator returned non-yieldable
-        if (!isYieldable && !iter) next(null, state.value)
-      } catch (err) {
-        // catch err, break iteration
-        done = true
-        callback.call(self, err)
+      var state
+      if (trycatch) {
+        try {
+          state = err ? iter.throw(err) : iter.next(val)
+        } catch (err) {
+          // catch err, break iteration
+          done = true
+          return callback.call(self, err)
+        }
+      } else {
+        state = err ? iter.throw(err) : iter.next(val)
       }
+      if (state && state.done) iter = null
+
+      // resolve yieldable
+      var isYieldable = raco._yieldable(state.value, step)
+
+      // next if generator returned non-yieldable
+      if (!isYieldable && !iter) next(null, state.value)
     }
   }
 
@@ -123,7 +130,7 @@ function _raco (genFn, args) {
 
   if (callback) {
     step()
-  } else {
+  } else if (raco.Promise) {
     // return promise if no callback
     return new raco.Promise(function (resolve, reject) {
       callback = function (err, val) {
@@ -132,6 +139,10 @@ function _raco (genFn, args) {
       }
       step()
     })
+  } else {
+    trycatch = false
+    callback = noop
+    step()
   }
 }
 
