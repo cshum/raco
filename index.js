@@ -129,9 +129,10 @@ function _raco (genFn, args) {
   }
 
   if (callback) {
+    // callback mode
     step()
   } else if (raco.Promise) {
-    // return promise if no callback
+    // return promise if callback not exists
     return new raco.Promise(function (resolve, reject) {
       callback = function (err, val) {
         if (err) return reject(err)
@@ -140,6 +141,8 @@ function _raco (genFn, args) {
       step()
     })
   } else {
+    // callback and promise not exists,
+    // no try catch wrap
     trycatch = false
     callback = noop
     step()

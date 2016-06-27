@@ -111,6 +111,30 @@ app.fn(function (err, val) {...})
 app.fn2().then(...).catch(...)
 ```
 
+#### `raco.Promise`
+
+Raco uses native promise by default. This can be overridden by setting `raco.Promise`.
+
+```js
+raco.Promise = require('bluebird')
+```
+
+Using promise, uncaught errors will NOT be thrown unless handled by `.catch()`.
+
+It is also possible to drop promise by unsetting it.
+If `raco.Promise` being unset and callback not provided,
+`raco(fn*)` will not return a promise. 
+Any uncaught error will be thrown.
+
+```js
+// unset promise
+raco.Promise = null
+
+raco(function * (next) {
+  // uncaught error will be thrown
+})
+```
+
 ## Parallel Callbacks
 
 raco provides parallel utilities to aggregate callbacks:
