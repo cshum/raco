@@ -46,20 +46,18 @@ test('scope', function (t) {
 
 test('explicit throws', function (t) {
   t.plan(2)
-  var orig = raco.Promise
-  raco.Promise = null
+  var r = raco()
+  r.Promise = null
 
-  t.throws(raco.wrap(function * () {
+  t.throws(r.wrap(function * () {
     throw new Error('boom')
   }), 'boom', 'no callback & promise throws')
 
   t.throws(function () {
-    raco(function * () {
+    r(function * () {
       throw new Error('boom')
     })
   }, 'boom', 'no callback & promise throws')
-
-  raco.Promise = orig
 })
 
 test('resolve and reject', function (t) {
@@ -144,9 +142,9 @@ test('yieldable', function (t) {
 
 test('override yieldable', function (t) {
   t.plan(2)
+  var r = raco()
 
-  var orig = raco._yieldable
-  raco._yieldable = function (val, cb) {
+  r._yieldable = function (val, cb) {
     // yield array
     if (Array.isArray(val)) {
       Promise.all(val).then(function (res) {
@@ -163,7 +161,7 @@ test('override yieldable', function (t) {
     }
   }
 
-  raco(function * () {
+  r(function * () {
     t.deepEqual(yield [
       Promise.resolve(1),
       Promise.resolve(2),
@@ -174,7 +172,6 @@ test('override yieldable', function (t) {
       yield 689
     } catch (err) {
       t.equal(err.message, 'DLLM', 'yield 689 throws error')
-      raco._yieldable = orig
     }
   }).catch(t.error)
 })
