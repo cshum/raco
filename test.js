@@ -33,6 +33,31 @@ test('arguments and callback return', function (t) {
   }, t.error)
 })
 
+test('multiple callbacks handling', function (t) {
+  t.plan(4)
+
+  raco(function * (next) {
+    next(null, 'foo')
+    next(null, 'bar')
+    return true
+  }, function (err, val) {
+    t.equal(
+      err.message,
+      'Multiple callbacks within one iteration',
+      'next twice error'
+    )
+    t.error(val)
+  })
+
+  raco(function * (next) {
+    next(null, 'foo')
+    return 'bar'
+  }, function (err, val) {
+    t.error(err)
+    t.equal(val, 'foo', 'return first callback on return')
+  })
+})
+
 test('scope', function (t) {
   t.plan(1)
 

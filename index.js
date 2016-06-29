@@ -101,9 +101,12 @@ module.exports = (function factory () {
           ticking = false
           step.apply(self, args)
         })
+      } else if (iter) {
+        // error on multiple callbacks wthin one iteration
+        iter = null
+        step.call(self, new Error('Multiple callbacks within one iteration'))
       } else {
-        // if another next() called during ticking,
-        // break iter and callback
+        // callback and return, pick callback value
         iter = null
       }
     }
