@@ -146,13 +146,13 @@ raco(function * (next) {
 
 raco provides parallel utilities to aggregate callbacks:
 
-##### `cb = next.push()`
+#### `cb = next.push()`
 Returns a callback handling function that aggregates result in sequence.
-##### `yield next.all()`
+#### `yield next.all()`
 Aggregates callbacks values into an array. Throws if error exists. Also resets the parallel list.
-##### `yield next.any()`
+#### `yield next.any()`
 Returns if any callback resolved, otherwise throws error. Also resets the parallel list.
-##### `next.clear()`
+#### `next.clear()`
 Resets parallel list.
 
 ```js
@@ -250,6 +250,23 @@ raco(function * () {
   // handle uncaught error
 })
 
+```
+
+## Factory function
+
+#### `raco = require('raco')()`
+
+Calling raco without argument returns new raco function. This is useful for module development, where modifying raco would not override globally.
+
+```js
+// export modified raco module
+var raco = module.exports = require('raco')()
+
+raco.Promise = null // disable Promise
+
+raco._yieldable = function (val, cb) {
+  // override yieldable
+}
 ```
 
 ## License
