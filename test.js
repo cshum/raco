@@ -96,13 +96,6 @@ test('resolve and reject', function (t) {
     t.equal(val, 167, 'callback value')
   })
 
-  raco(function * () {
-    return Promise.reject(167)
-  }, function (err, val) {
-    t.equal(err, 167, 'callback error')
-    t.error(val)
-  })
-
   // promise
   raco(function * () {
     return 167
@@ -114,6 +107,13 @@ test('resolve and reject', function (t) {
     throw new Error('167')
   }).then(t.error, function (err) {
     t.equal(err.message, '167', 'promise reject')
+  })
+
+  raco(function * () {
+    return Promise.reject() // falsy reject
+  }, function (err, val) {
+    t.ok(err instanceof Error, 167, 'promise falsy reject')
+    t.error(val)
   })
 })
 
