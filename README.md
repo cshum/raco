@@ -252,7 +252,7 @@ raco(function * () {
 
 ```
 
-## Factory function
+## Factory Function
 
 #### `raco = require('raco')()`
 
