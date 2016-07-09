@@ -78,10 +78,8 @@ module.exports = (function factory () {
           state = err ? iter.throw(err) : iter.next(val)
         }
         if (state && state.done) iter = null
-
         // resolve yieldable
         var isYieldable = raco._yieldable(state.value, step)
-
         // next if generator returned non-yieldable
         if (!isYieldable && !iter) next(null, state.value)
       }
@@ -119,7 +117,7 @@ module.exports = (function factory () {
     }
 
     /**
-     * next.push parallel callback queue
+     * push parallel callback queue
      *
      * @returns {function} callback function (err, val)
      */
@@ -129,7 +127,7 @@ module.exports = (function factory () {
     }
 
     /**
-     * next.all parallel callback values aggregation and resets queue
+     * aggregate parallel values into array and resets queue
      */
     next.all = function () {
       if (!parallel) return next(null, [])
@@ -138,7 +136,7 @@ module.exports = (function factory () {
     }
 
     /**
-     * next.all parallel callback values aggregation and resets queue
+     * return first value of parallel and resets queue
      */
     next.any = function () {
       if (!parallel) return next(null, null)
