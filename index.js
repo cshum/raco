@@ -47,7 +47,11 @@ module.exports = (function factory () {
 
     // pass raco next to generator function
     if (isFunction(args[args.length - 1])) callback = args.pop()
-    args.push(next)
+    if (raco.prependNextArg) {
+      args.unshift(next)
+    } else {
+      args.push(next)
+    }
 
     var iter = isGenerator(genFn) ? genFn : genFn.apply(self, args)
 
@@ -200,9 +204,14 @@ module.exports = (function factory () {
   /**
    * Promise constructor of raco,
    * use native Promise by default
-   *
    */
   raco.Promise = global.Promise
+
+  /**
+   * Prepend next argument flag.
+   * By default append as in node callback convention
+   */
+  raco.prependNextArg = false
 
   /**
    * yieldable callback mapper

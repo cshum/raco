@@ -8,7 +8,40 @@ test('arguments and callback return', function (t) {
   var fn = raco.wrap(function * (num, str, next) {
     t.equal(num, 167, 'arguemnt')
     t.equal(str, '167', 'arguemnt')
-    t.equal(typeof next, 'function', 'stepping function')
+    t.equal(yield next(null, 'foo'), 'foo', 'stepping function')
+    next(null, 'foo', 'bar') // should return
+    return 'boom' // should not return
+  })
+
+  // callback
+  t.notOk(fn(167, '167', function (err, res) {
+    t.notOk(err, 'no callback error')
+    t.deepEqual(
+      Array.prototype.slice.call(arguments),
+      [null, 'foo', 'bar'],
+      'return callback arguments'
+    )
+  }), 'passing callback returns undefined')
+
+  // promise
+  fn(167, '167').then(function () {
+    t.deepEqual(
+      Array.prototype.slice.call(arguments),
+      ['foo'],
+      'return callback value for promise'
+    )
+  }, t.error)
+})
+
+test('prepend next arg', function (t) {
+  t.plan(10)
+  var r = raco()
+  r.prependNextArg = true
+
+  var fn = r.wrap(function * (next, num, str) {
+    t.equal(num, 167, 'arguemnt')
+    t.equal(str, '167', 'arguemnt')
+    t.equal(yield next(null, 'foo'), 'foo', 'stepping function')
     next(null, 'foo', 'bar') // should return
     return 'boom' // should not return
   })
