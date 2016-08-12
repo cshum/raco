@@ -35,8 +35,7 @@ test('arguments and callback return', function (t) {
 
 test('prepend next arg', function (t) {
   t.plan(10)
-  var r = raco()
-  r.prependNextArg = true
+  var r = raco({ prependNextArg: true })
 
   var fn = r.wrap(function * (next, num, str) {
     t.equal(num, 167, 'arguemnt')
@@ -104,8 +103,7 @@ test('scope', function (t) {
 
 test('explicit throws', function (t) {
   t.plan(2)
-  var r = raco()
-  r.Promise = null
+  var r = raco({ Promise: null })
 
   t.throws(r.wrap(function * () {
     throw new Error('boom')
@@ -200,24 +198,24 @@ test('yieldable', function (t) {
 
 test('override yieldable', function (t) {
   t.plan(2)
-  var r = raco()
-
-  r._yieldable = function (val, cb) {
-    // yield array
-    if (Array.isArray(val)) {
-      Promise.all(val).then(function (res) {
-        cb(null, res)
-      }, function (err) {
-        cb(err || new Error())
-      })
-      return true
+  var r = raco({
+    yieldable: function (val, cb) {
+      // yield array
+      if (Array.isArray(val)) {
+        Promise.all(val).then(function (res) {
+          cb(null, res)
+        }, function (err) {
+          cb(err || new Error())
+        })
+        return true
+      }
+      // yield 689 throws error
+      if (val === 689) {
+        cb(new Error('DLLM'))
+        return true
+      }
     }
-    // yield 689 throws error
-    if (val === 689) {
-      cb(new Error('DLLM'))
-      return true
-    }
-  }
+  })
 
   r(function * () {
     t.deepEqual(yield [

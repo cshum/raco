@@ -16,8 +16,8 @@ In raco, both callbacks and promises are yieldable.
 Resulting function can be called by both callbacks and promises.
 This enables a powerful control flow while maintaining simplicity.
 
-#### `raco(fn*, cb)`
-#### `raco(fn*).then(...).catch(...)`
+### `raco(fn*, cb)`
+### `raco(fn*).then(...).catch(...)`
 
 Resolves a generator function.
 Accepts optional arguments and callback. 
@@ -112,35 +112,109 @@ app.fn(function (err, val) {...})
 app.fn2().then(...).catch(...)
 ```
 
-#### `raco.Promise`
+## Configurations
+
+### `raco = require('raco')(opts)`
+
+Passing options object `opts` returns a customized raco instance. 
+
+```js
+var raco = require('raco')({ 
+  Promise: null, // disable Promise
+  yieldable: function (val, cb) {
+    // custom yieldable
+  },
+  prependNextArg: true // prepend next argument
+})
+
+```
+
+#### `opts.Promise`
 
 Raco uses native promise by default. This can be overridden by setting `raco.Promise`.
 
 ```js
 // import by factory to avoid overriding global
-var raco = require('raco')()
-
-raco.Promise = require('bluebird')
+var raco = require('raco')({ Promise: require('bluebird') })
 ```
 
 Using promise, uncaught errors will NOT be thrown unless handled by `.catch()`.
 
 It is also possible to drop promise by unsetting it.
-If `raco.Promise` being unset and callback not provided,
+If `opts.Promise` being unset and callback not provided,
 `raco(fn*)` will not return a promise. 
 Any uncaught error will be thrown.
 
 ```js
 // import by factory to avoid overriding global
-var raco = require('raco')()
-
 // unset promise
-raco.Promise = null
+var raco = require('raco')({ Promise: null })
 
 raco(function * (next) {
   // uncaught error will be thrown
 })
 ```
+
+#### `opts.prependNextArg`
+
+if true, the generator is called with `genFn(next, args...)`
+instead of `genFn(args..., next)`. This can be useful for functions
+that accept varying numbers of arguments
+
+#### `opts.yieldable`
+
+By default, the following objects are considered yieldable:
+* Promise
+* Generator
+* Generator Function
+* Observable
+* Thunk
+
+It is also possible to override the default yieldable mapper. Use with caution:
+* Takes the yielded value, returns `true` to acknowledge yieldable.
+* Callback`cb(err, val)` to resolve the yieldable.
+
+```js
+// import by factory to avoid overriding global
+var raco = require('raco')()
+
+raco._yieldable = function (val, cb) {
+  // map array to Promise.all
+  if (Array.isArray(val)) {
+    Promise.all(val).then(function (res) {
+      cb(null, res)
+    }, cb)
+    return true // acknowledge yieldable
+  }
+
+  // Anything can be mapped!
+  if (val === 689) {
+    cb(new Error('DLLM'))
+    return true // acknowledge yieldable
+  }
+
+  return false // acknowledge non-yieldable
+}
+
+raco(function * () {
+  console.log(yield [
+    Promise.resolve(1),
+    Promise.resolve(2),
+    3
+  ]) // [1, 2, 3]
+
+  // yield 689 throws error
+  try {
+    yield 689
+  } catch (err) {
+    console.log(err.message) // 'DLLM'
+  }
+}).catch(function (err) {
+  // handle uncaught error
+})
+
+```
+
 
 ## Parallel Callbacks
 
@@ -194,79 +268,6 @@ raco(function * (next) {
 }).catch(function (err) {
  // handle uncaught error
 })
-```
-
-## Yieldables
-
-By default, the following objects are considered yieldable:
-* Promise
-* Generator
-* Generator Function
-* Observable
-* Thunk
-
-#### `raco._yieldable = function (val, cb) { }`
-
-It is also possible to override the default yieldable mapper. Use with caution:
-* Takes the yielded value, returns `true` to acknowledge yieldable.
-* Callback`cb(err, val)` to resolve the yieldable.
-
-```js
-// import by factory to avoid overriding global
-var raco = require('raco')()
-
-raco._yieldable = function (val, cb) {
-  // map array to Promise.all
-  if (Array.isArray(val)) {
-    Promise.all(val).then(function (res) {
-      cb(null, res)
-    }, cb)
-    return true // acknowledge yieldable
-  }
-
-  // Anything can be mapped!
-  if (val === 689) {
-    cb(new Error('DLLM'))
-    return true // acknowledge yieldable
-  }
-
-  return false // acknowledge non-yieldable
-}
-
-raco(function * () {
-  console.log(yield [
-    Promise.resolve(1),
-    Promise.resolve(2),
-    3
-  ]) // [1, 2, 3]
-
-  // yield 689 throws error
-  try {
-    yield 689
-  } catch (err) {
-    console.log(err.message) // 'DLLM'
-  }
-}).catch(function (err) {
-  // handle uncaught error
-})
-
-```
-
-## Factory Function
-
-#### `raco = require('raco')()`
-
-Calling raco without argument returns new raco function. This is useful for module development, where modifying raco would not override globally.
-
-```js
-// export modified raco module
-var raco = module.exports = require('raco')()
-
-raco.Promise = null // disable Promise
-
-raco._yieldable = function (val, cb) {
-  // override yieldable
-}
 ```
 
 ## License

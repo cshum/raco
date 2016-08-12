@@ -15,19 +15,63 @@ function isObservable (val) {
 }
 function noop () {}
 
-module.exports = (function factory () {
+module.exports = (function factory (opts) {
+  opts = opts || {}
+
   /**
-   * raco resolver
-   * returns factory if no arguments
-   *
-   * @param {function*} genFn - generator function
-   * @param {...*} args - optional arguments
-   * @returns {promise} if no callback provided
+   * Promise constructor of raco,
+   * use native Promise by default
    */
-  function raco (genFn) {
-    if (arguments.length === 0) return factory()
-    var args = Array.prototype.slice.call(arguments, 1)
-    return _raco.call(this, genFn, args)
+  var Promise = opts.hasOwnProperty('Promise') ? opts.Promise : global.Promise
+
+  /**
+   * Prepend next argument flag.
+   * By default append as in node callback convention
+   */
+  var prependNextArg = !!opts.prependNextArg
+
+  var customYieldable = isFunction(opts.yieldable) ? opts.yieldable : null
+
+  /**
+   * yieldable callback mapper
+   *
+   * @param {*} val - yielded value to resolve
+   * @param {function} cb - resolver callback function
+   * @returns {boolean} acknowledge yieldable
+   */
+  function _yieldable (val, cb) {
+    if (isPromise(val)) {
+      // Promise
+      val.then(function (value) {
+        cb(null, value)
+      }, function (err) {
+        cb(err || new Error())
+      })
+      return true
+    } else if (isGeneratorFunction(val) || isGenerator(val)) {
+      // Generator
+      raco(val, cb)
+      return true
+    } else if (isFunction(val)) {
+      // Thunk
+      val(cb)
+      return true
+    } else if (isObservable(val)) {
+      // Observable
+      var dispose = val.subscribe(function (val) {
+        cb(null, val)
+        dispose.dispose()
+      }, function (err) {
+        cb(err || new Error())
+        dispose.dispose()
+      })
+      return true
+    } else if (customYieldable) {
+      return customYieldable(val, cb)
+    } else {
+      // Not yieldable
+      return false
+    }
   }
 
   /**
@@ -47,7 +91,7 @@ module.exports = (function factory () {
 
     // pass raco next to generator function
     if (isFunction(args[args.length - 1])) callback = args.pop()
-    if (raco.prependNextArg) {
+    if (prependNextArg) {
       args.unshift(next)
     } else {
       args.push(next)
@@ -83,7 +127,7 @@ module.exports = (function factory () {
         }
         if (state && state.done) iter = null
         // resolve yieldable
-        var isYieldable = raco._yieldable(state.value, step)
+        var isYieldable = _yieldable(state.value, step)
         // next if generator returned non-yieldable
         if (!isYieldable && !iter) next(null, state.value)
       }
@@ -151,9 +195,9 @@ module.exports = (function factory () {
     if (callback) {
       // callback mode
       step()
-    } else if (raco.Promise) {
+    } else if (Promise) {
       // return promise if callback not exists
-      return new raco.Promise(function (resolve, reject) {
+      return new Promise(function (resolve, reject) {
         callback = function (err, val) {
           if (err) return reject(err)
           resolve(val)
@@ -167,6 +211,20 @@ module.exports = (function factory () {
       callback = noop
       step()
     }
+  }
+
+  /**
+   * raco resolver
+   * returns factory if no arguments
+   *
+   * @param {function*} genFn - generator function or factory options
+   * @param {...*} args - optional arguments
+   * @returns {promise} if no callback provided
+   */
+  function raco (genFn) {
+    if (!isGeneratorFunction(genFn) && !isGenerator(genFn)) return factory(genFn)
+    var args = Array.prototype.slice.call(arguments, 1)
+    return _raco.call(this, genFn, args)
   }
 
   /**
@@ -199,58 +257,6 @@ module.exports = (function factory () {
       }
     }
     return obj
-  }
-
-  /**
-   * Promise constructor of raco,
-   * use native Promise by default
-   */
-  raco.Promise = global.Promise
-
-  /**
-   * Prepend next argument flag.
-   * By default append as in node callback convention
-   */
-  raco.prependNextArg = false
-
-  /**
-   * yieldable callback mapper
-   *
-   * @param {*} val - yielded value to resolve
-   * @param {function} cb - resolver callback function
-   * @returns {boolean} acknowledge yieldable
-   */
-  raco._yieldable = function (val, cb) {
-    if (isPromise(val)) {
-      // Promise
-      val.then(function (value) {
-        cb(null, value)
-      }, function (err) {
-        cb(err || new Error())
-      })
-      return true
-    } else if (isGeneratorFunction(val) || isGenerator(val)) {
-      // Generator
-      raco(val, cb)
-      return true
-    } else if (isFunction(val)) {
-      // Thunk
-      val(cb)
-      return true
-    } else if (isObservable(val)) {
-      // Observable
-      var dispose = val.subscribe(function (val) {
-        cb(null, val)
-        dispose.dispose()
-      }, function (err) {
-        cb(err || new Error())
-        dispose.dispose()
-      })
-      return true
-    } else {
-      // Not yieldable
-      return false
-    }
   }
 
   return raco
