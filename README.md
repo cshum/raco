@@ -46,7 +46,7 @@ raco(function * (next) {
     fs.createWriteStream('./bar'),
     next
   )
-}).catch(function (err) {
+}).catch((err) => {
   // handle uncaught error
 })
 ```
@@ -70,12 +70,12 @@ raco(function * (next) {
   } catch (err) {
     console.log(err.message) // 'boom'
   }
-}).catch(function (err) {
+}).catch((err) => {
   // handle uncaught error
 })
 ```
 
-#### `fn = raco.wrap(fn*)`
+### `fn = raco.wrap(fn*)`
 
 Wraps a generator function into regular function that optionally accepts callback or returns a promise.
 
@@ -86,14 +86,14 @@ var fn = raco.wrap(function * (arg1, arg2, next) {
   return arg1 + arg2
 })
 
-fn(167, 199, function (err, val) { ... }) // Use with callback
+fn(167, 199, (err, val) => { ... }) // Use with callback
 
 fn(167, 689) // use with promise
-  .then(function (val) { ... })
-  .catch(function (err) { ... })
+  .then((val) => { ... })
+  .catch((err) => { ... })
 ```
 
-#### `raco.wrapAll(obj)`
+### `raco.wrapAll(obj)`
 
 Wraps generator function properties of object:
 
@@ -108,15 +108,13 @@ raco.wrapAll(App.prototype)
 
 var app = new App()
 
-app.fn(function (err, val) {...})
+app.fn((err, val) => {...})
 app.fn2().then(...).catch(...)
 ```
 
-## Configurations
-
 ### `raco = require('raco')(opts)`
 
-Passing options object `opts` returns a customized raco instance. 
+Calling raco with options object `opts` returns new raco function, with a set of available options:
 
 ```js
 var raco = require('raco')({ 
@@ -134,7 +132,6 @@ var raco = require('raco')({
 Raco uses native promise by default. This can be overridden by setting `raco.Promise`.
 
 ```js
-// import by factory to avoid overriding global
 var raco = require('raco')({ Promise: require('bluebird') })
 ```
 
@@ -146,7 +143,6 @@ If `opts.Promise` being unset and callback not provided,
 Any uncaught error will be thrown.
 
 ```js
-// import by factory to avoid overriding global
 // unset promise
 var raco = require('raco')({ Promise: null })
 
@@ -157,9 +153,25 @@ raco(function * (next) {
 
 #### `opts.prependNextArg`
 
-if true, the generator is called with `genFn(next, args...)`
-instead of `genFn(args..., next)`. This can be useful for functions
-that accept varying numbers of arguments
+By default, `next(err, val)` function appends to arguments `fn* (args..., next)`. 
+If `opts.prependNextArg` set to `true`, generator function is called with `fn* (next, args...)`.
+This can be useful for functions that accept varying numbers of arguments.
+
+```js
+var raco = require('raco')({ prependNextArg: true })
+
+var fn = raco.wrap(function * (next, a, b) {
+  return a + b
+})
+
+fn(1, 6, (err, val) => {
+  console.log(val) // 7
+})
+fn(1, 6).then((val) => {
+  console.log(val) // 7
+})
+
+```
 
 #### `opts.yieldable`
 
@@ -175,26 +187,23 @@ It is also possible to override the default yieldable mapper. Use with caution:
 * Callback`cb(err, val)` to resolve the yieldable.
 
 ```js
-// import by factory to avoid overriding global
-var raco = require('raco')()
-
-raco._yieldable = function (val, cb) {
-  // map array to Promise.all
-  if (Array.isArray(val)) {
-    Promise.all(val).then(function (res) {
-      cb(null, res)
-    }, cb)
-    return true // acknowledge yieldable
+var raco = require('raco')({
+  yieldable: (val, cb) => {
+    // map array to Promise.all
+    if (Array.isArray(val)) {
+      Promise.all(val).then(function (res) {
+        cb(null, res)
+      }, cb)
+      return true // acknowledge yieldable
+    }
+    // Anything can be mapped!
+    if (val === 689) {
+      cb(new Error('DLLM'))
+      return true // acknowledge yieldable
+    }
+    return false // acknowledge non-yieldable
   }
-
-  // Anything can be mapped!
-  if (val === 689) {
-    cb(new Error('DLLM'))
-    return true // acknowledge yieldable
-  }
-
-  return false // acknowledge non-yieldable
-}
+})
 
 raco(function * () {
   console.log(yield [
@@ -209,7 +218,7 @@ raco(function * () {
   } catch (err) {
     console.log(err.message) // 'DLLM'
   }
-}).catch(function (err) {
+}).catch((err) => {
   // handle uncaught error
 })
 
@@ -232,10 +241,11 @@ Resets parallel list.
 ```js
 var raco = require('raco')
 
-function asyncFn = function (val, cb) {
+function asyncFn (val, cb) {
   setTimeout(cb, Math.random() * 100, null, val)
 }
-function asyncFnErr = function (err, cb) {
+
+function asyncFnErr (err, cb) {
   setTimeout(cb, Math.random() * 100, err)
 }
 
@@ -265,7 +275,7 @@ raco(function * (next) {
   asyncFn(8, next.push())
   asyncFnErr(new Error('boom'), next.push())
   yield next.any() // 8
-}).catch(function (err) {
+}).catch((err) => {
  // handle uncaught error
 })
 ```
