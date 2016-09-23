@@ -1,5 +1,4 @@
 var isGeneratorFunction = require('is-generator-function')
-var parallels = require('parallels')
 
 function isFunction (val) {
   return typeof val === 'function'
@@ -22,7 +21,8 @@ module.exports = (function factory (opts) {
    * Promise constructor of raco,
    * use native Promise by default
    */
-  var Promise = opts.hasOwnProperty('Promise') ? opts.Promise : global.Promise
+  var Promise = Object.prototype.hasOwnProperty.call(opts, 'Promise')
+    ? opts.Promise : global.Promise
 
   /**
    * Prepend next argument flag.
@@ -86,7 +86,6 @@ module.exports = (function factory (opts) {
     var done = false
     var trycatch = true
     var ticking = false
-    var parallel = null
     var callback = null
 
     // pass raco next to generator function
@@ -157,41 +156,6 @@ module.exports = (function factory (opts) {
       }
     }
 
-    /**
-     * clear parallel queue
-     */
-    next.clear = function () {
-      parallel = null
-    }
-
-    /**
-     * push parallel callback queue
-     *
-     * @returns {function} callback function (err, val)
-     */
-    next.push = function () {
-      parallel = parallel || parallels()
-      return parallel.push()
-    }
-
-    /**
-     * aggregate parallel values into array and resets queue
-     */
-    next.all = function () {
-      if (!parallel) return next(null, [])
-      parallel.all(next)
-      parallel = null
-    }
-
-    /**
-     * return first value of parallel and resets queue
-     */
-    next.any = function () {
-      if (!parallel) return next(null, null)
-      parallel.any(next)
-      parallel = null
-    }
-
     if (callback) {
       // callback mode
       step()
@@ -250,7 +214,7 @@ module.exports = (function factory (opts) {
   raco.wrapAll = function (obj) {
     for (var key in obj) {
       if (
-        obj.hasOwnProperty(key) &&
+        Object.prototype.hasOwnProperty.call(obj, key) &&
         (isGeneratorFunction(obj[key]) || isGenerator(obj[key]))
       ) {
         obj[key] = raco.wrap(obj[key])
