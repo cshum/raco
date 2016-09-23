@@ -16,20 +16,9 @@ function noop () {}
 
 module.exports = (function factory (opts) {
   opts = opts || {}
-
-  /**
-   * Promise constructor of raco,
-   * use native Promise by default
-   */
   var Promise = Object.prototype.hasOwnProperty.call(opts, 'Promise')
     ? opts.Promise : global.Promise
-
-  /**
-   * Prepend next argument flag.
-   * By default append as in node callback convention
-   */
   var prependNextArg = !!opts.prependNextArg
-
   var customYieldable = isFunction(opts.yieldable) ? opts.yieldable : null
 
   /**
