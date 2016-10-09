@@ -39,7 +39,6 @@ raco(function * (next) {
   // yield callback
   yield setTimeout(next, 1000) // delay 1 second
   var data = yield fs.readFile('./data', next)  
-  var buf = crypto.randomBytes(48, next)
   yield mkdirp('/tmp/foo/bar', next)
   yield pump(
     fs.createReadStream('./foo'),
@@ -112,9 +111,9 @@ app.fn((err, val) => {...})
 app.fn2().then(...).catch(...)
 ```
 
-### `raco = require('raco')(opts)`
+### Configurations
 
-Calling raco with options object `opts` returns new raco function, with a set of available options:
+Calling raco with options object makes a factory function with a set of available options:
 
 ```js
 var raco = require('raco')({ 
@@ -122,7 +121,7 @@ var raco = require('raco')({
   yieldable: function (val, cb) {
     // custom yieldable
   },
-  prependNextArg: true // prepend next argument
+  prependNextArg: true // prepend or append `next` argument
 })
 
 ```
