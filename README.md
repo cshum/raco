@@ -74,7 +74,7 @@ raco(function * (next) {
 })
 ```
 
-### `fn = raco.wrap(fn*)`
+### `fn = raco.wrap(fn*, [opts])`
 
 Wraps a generator function into regular function that optionally accepts callback or returns a promise.
 
@@ -92,9 +92,9 @@ fn(167, 689) // use with promise
   .catch((err) => { ... })
 ```
 
-### `raco.wrapAll(obj)`
+### `raco.wrapAll(obj, [opts])`
 
-Wraps generator function properties of object:
+Wraps generator function properties of object.
 
 ```js
 function App () { }
@@ -111,7 +111,7 @@ app.fn((err, val) => {...})
 app.fn2().then(...).catch(...)
 ```
 
-### Configurations
+### Options
 
 Calling raco with options object makes a factory function with a set of available options:
 
@@ -121,7 +121,7 @@ var raco = require('raco')({
   yieldable: function (val, cb) {
     // custom yieldable
   },
-  prependNextArg: true // prepend or append `next` argument
+  prepend: true // prepend or append `next` argument
 })
 
 ```
@@ -150,18 +150,18 @@ raco(function * (next) {
 })
 ```
 
-#### `opts.prependNextArg`
+#### `opts.prepend`
 
 By default, `next(err, val)` function appends to arguments `fn* (args..., next)`. 
-If `opts.prependNextArg` set to `true`, generator function is called with `fn* (next, args...)`.
+If `opts.prepend` set to `true`, generator function is called with `fn* (next, args...)`.
 This can be useful for functions that accept varying numbers of arguments.
 
 ```js
-var raco = require('raco')({ prependNextArg: true })
+var raco = require('raco')
 
 var fn = raco.wrap(function * (next, a, b) {
   return a + b
-})
+}, { prpend: true })
 
 fn(1, 6, (err, val) => {
   console.log(val) // 7

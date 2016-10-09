@@ -1,6 +1,6 @@
 {
   "name": "raco",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "Generator based flow-control that supports both callback and promise",
   "scripts": {
     "test": "standard && node test.js"
@@ -17,6 +17,7 @@
     "tape": "^3.0.2"
   },
   "dependencies": {
-    "is-generator-function": "^1.0.3"
+    "is-generator-function": "^1.0.3",
+    "xtend": "^4.0.1"
   }
 }

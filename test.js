@@ -35,15 +35,13 @@ test('arguments and callback return', function (t) {
 
 test('prepend next arg', function (t) {
   t.plan(10)
-  var r = raco({ prependNextArg: true })
-
-  var fn = r.wrap(function * (next, num, str) {
+  var fn = raco.wrap(function * (next, num, str) {
     t.equal(num, 167, 'arguemnt')
     t.equal(str, '167', 'arguemnt')
     t.equal(yield next(null, 'foo'), 'foo', 'stepping function')
     next(null, 'foo', 'bar') // should return
     return 'boom' // should not return
-  })
+  }, { prepend: true })
 
   // callback
   t.notOk(fn(167, '167', function (err, res) {

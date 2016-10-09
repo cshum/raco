@@ -65,14 +65,14 @@ module.exports = (function factory (_opts) {
 
     opts = xtend({
       Promise: global.Promise,
-      prependNextArg: false,
+      prepend: false,
       yieldable: null
     }, _opts, opts)
 
     // pass raco next to generator function
     if (isFunction(args[args.length - 1])) callback = args.pop()
     // prepend or append next arg
-    if (opts.prependNextArg) args.unshift(next)
+    if (opts.prepend) args.unshift(next)
     else args.push(next)
 
     var iter = isGenerator(genFn) ? genFn : genFn.apply(self, args)
@@ -180,10 +180,10 @@ module.exports = (function factory (_opts) {
    * @param {function} genFn - generator function
    * @returns {function} regular function
    */
-  raco.wrap = function (genFn) {
+  raco.wrap = function (genFn, opts) {
     return function () {
       var args = Array.prototype.slice.call(arguments)
-      return _raco.call(this, genFn, args)
+      return _raco.call(this, genFn, args, opts)
     }
   }
 
@@ -193,13 +193,13 @@ module.exports = (function factory (_opts) {
    * @param {object} obj - object to raco.wrap
    * @returns {object} original object
    */
-  raco.wrapAll = function (obj) {
+  raco.wrapAll = function (obj, opts) {
     for (var key in obj) {
       if (
         Object.prototype.hasOwnProperty.call(obj, key) &&
         (isGeneratorFunction(obj[key]) || isGenerator(obj[key]))
       ) {
-        obj[key] = raco.wrap(obj[key])
+        obj[key] = raco.wrap(obj[key], opts)
       }
     }
     return obj
