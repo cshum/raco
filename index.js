@@ -194,7 +194,7 @@ module.exports = (function factory (_opts) {
       if (isFunction(genFn)) throw new Error('Generator function required')
       else if (!isGenerator(genFn)) return factory(genFn)
     }
-    opts = xtend({ Promise: null }, _opts, opts)
+    opts = xtend(_opts, opts, { Promise: null })
     return _raco.call(this, genFn, [], opts)
   }
 

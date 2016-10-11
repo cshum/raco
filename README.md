@@ -16,12 +16,10 @@ In raco, both callbacks and promises are yieldable.
 Resulting function can be called by both callbacks and promises.
 This enables a powerful control flow while maintaining simplicity.
 
-### `raco(fn*, cb)`
-### `raco(fn*).then(...).catch(...)`
+### `raco(fn*, [opts])`
 
 Resolves a generator function.
-Accepts optional arguments and callback. 
-Returns a promise if callback not exists.
+This does not return a Promise; uncaught error will be thrown.
 
 ```js
 // import raco
@@ -45,8 +43,6 @@ raco(function * (next) {
     fs.createWriteStream('./bar'),
     next
   )
-}).catch((err) => {
-  // handle uncaught error
 })
 ```
 
@@ -69,8 +65,6 @@ raco(function * (next) {
   } catch (err) {
     console.log(err.message) // 'boom'
   }
-}).catch((err) => {
-  // handle uncaught error
 })
 ```
 
@@ -132,22 +126,6 @@ Raco uses native promise by default. This can be overridden by setting `raco.Pro
 
 ```js
 var raco = require('raco')({ Promise: require('bluebird') })
-```
-
-Using promise, uncaught errors will NOT be thrown unless handled by `.catch()`.
-
-It is also possible to drop promise by unsetting it.
-If `opts.Promise` being unset and callback not provided,
-`raco(fn*)` will not return a promise. 
-Any uncaught error will be thrown.
-
-```js
-// unset promise
-var raco = require('raco')({ Promise: null })
-
-raco(function * (next) {
-  // uncaught error will be thrown
-})
 ```
 
 #### `opts.prepend`
@@ -217,8 +195,6 @@ raco(function * () {
   } catch (err) {
     console.log(err.message) // 'DLLM'
   }
-}).catch((err) => {
-  // handle uncaught error
 })
 
 ```
