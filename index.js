@@ -1,17 +1,32 @@
-var isGeneratorFunction = require('is-generator-function')
-var xtend = require('xtend')
-
+function xtend () {
+  var i, l, key, source
+  var tar = {}
+  for (i = 0, l = arguments.length; i < l; i++) {
+    source = arguments[i]
+    for (key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        tar[key] = source[key]
+      }
+    }
+  }
+  return tar
+}
 function isFunction (val) {
   return typeof val === 'function'
 }
 function isGenerator (val) {
-  return val && typeof val.next === 'function' && typeof val.throw === 'function'
+  return val && isFunction(val.next) && isFunction(val.throw)
+}
+function isGeneratorFunction (val) {
+  if (!val || !val.constructor) return false
+  if (val.constructor.name === 'GeneratorFunction' || val.constructor.displayName === 'GeneratorFunction') return true
+  return isGenerator(val.constructor.prototype)
 }
 function isPromise (val) {
-  return val && typeof val.then === 'function'
+  return val && isFunction(val.then)
 }
 function isObservable (val) {
-  return val && typeof val.subscribe === 'function'
+  return val && isFunction(val.subscribe)
 }
 function noop () {}
 
