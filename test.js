@@ -66,11 +66,11 @@ test('prepend next arg', function (t) {
 test('multiple callbacks handling', function (t) {
   t.plan(4)
 
-  raco(function * (next) {
+  raco.wrap(function * (next) {
     next(null, 'foo')
     next(null, 'bar')
     return true
-  }, function (err, val) {
+  })(function (err, val) {
     t.equal(
       err.message,
       'Multiple callbacks within one iteration',
@@ -79,10 +79,10 @@ test('multiple callbacks handling', function (t) {
     t.error(val)
   })
 
-  raco(function * (next) {
+  raco.wrap(function * (next) {
     next(null, 'foo')
     return 'bar'
-  }, function (err, val) {
+  })(function (err, val) {
     t.error(err)
     t.equal(val, 'foo', 'return first callback on return')
   })
@@ -116,31 +116,30 @@ test('explicit throws', function (t) {
 
 test('resolve and reject', function (t) {
   t.plan(6)
+  var fn = raco.wrap(function * () {
+    return yield Promise.resolve(167)
+  })
 
   // callback
-  raco(function * () {
-    return yield Promise.resolve(167)
-  }, function (err, val) {
+  fn(function (err, val) {
     t.error(err)
     t.equal(val, 167, 'callback value')
   })
 
   // promise
-  raco(function * () {
-    return 167
-  }).then(function (val) {
+  fn().then(function (val) {
     t.equal(val, 167, 'promise resolve')
   }, t.error)
 
-  raco(function * () {
+  raco.wrap(function * () {
     throw new Error('167')
-  }).then(t.error, function (err) {
+  })().then(t.error, function (err) {
     t.equal(err.message, '167', 'promise reject')
   })
 
-  raco(function * () {
+  raco.wrap(function * () {
     return Promise.reject() // falsy reject
-  }, function (err, val) {
+  })(function (err, val) {
     t.ok(err instanceof Error, 167, 'promise falsy reject')
     t.error(val)
   })
@@ -191,12 +190,24 @@ test('yieldable', function (t) {
     t.equal(yield instantCb(next), 1044, 'yield callback')
     t.equal(yield tryCatch(), 167, 'yield gnerator-promise')
     t.equal(yield tryCatchNext(), 167, 'yield next val')
-  }).catch(t.error)
+  })
 })
 
 test('override yieldable', function (t) {
   t.plan(2)
-  var r = raco({
+  raco(function * () {
+    t.deepEqual(yield [
+      Promise.resolve(1),
+      Promise.resolve(2),
+      3
+    ], [1, 2, 3], 'yield map array to Promise.all')
+
+    try {
+      yield 689
+    } catch (err) {
+      t.equal(err.message, 'DLLM', 'yield 689 throws error')
+    }
+  }, {
     yieldable: function (val, cb) {
       // yield array
       if (Array.isArray(val)) {
@@ -214,20 +225,6 @@ test('override yieldable', function (t) {
       }
     }
   })
-
-  r(function * () {
-    t.deepEqual(yield [
-      Promise.resolve(1),
-      Promise.resolve(2),
-      3
-    ], [1, 2, 3], 'yield map array to Promise.all')
-
-    try {
-      yield 689
-    } catch (err) {
-      t.equal(err.message, 'DLLM', 'yield 689 throws error')
-    }
-  }).catch(t.error)
 })
 
 test('wrapAll', function (t) {

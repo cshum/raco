@@ -85,7 +85,7 @@ function _raco (genFn, args, opts) {
   var callback = null
 
   opts = xtend({
-    Promise: global.Promise,
+    Promise: Promise,
     prepend: false,
     yieldable: null
   }, opts)
@@ -189,10 +189,13 @@ module.exports = (function factory (_opts) {
    * @param {...*} args - optional arguments
    * @returns {promise} if no callback provided
    */
-  function raco (genFn) {
-    if (!isGeneratorFunction(genFn) && !isGenerator(genFn)) return factory(genFn)
-    var args = Array.prototype.slice.call(arguments, 1)
-    return _raco.call(this, genFn, args, _opts)
+  function raco (genFn, opts) {
+    if (!isGeneratorFunction(genFn)) {
+      if (isFunction(genFn)) throw new Error('Generator function required')
+      else if (!isGenerator(genFn)) return factory(genFn)
+    }
+    opts = xtend({ Promise: null }, _opts, opts)
+    return _raco.call(this, genFn, [], opts)
   }
 
   /**
@@ -203,6 +206,9 @@ module.exports = (function factory (_opts) {
    * @returns {function} regular function
    */
   raco.wrap = function (genFn, opts) {
+    if (!isGeneratorFunction(genFn) && isFunction(genFn)) {
+      throw new Error('Generator function required')
+    }
     opts = xtend(_opts, opts)
     return function () {
       var args = Array.prototype.slice.call(arguments)
