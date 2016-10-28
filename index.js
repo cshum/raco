@@ -1,3 +1,9 @@
+var DEFAULT_OPTS = {
+  Promise: Promise,
+  prepend: false,
+  yieldable: null
+}
+
 function xtend () {
   var i, l, key, source
   var tar = {}
@@ -48,7 +54,7 @@ function yieldable (val, cb) {
     return true
   } else if (isGeneratorFunction(val) || isGenerator(val)) {
     // Generator
-    _raco.call(this, val, [cb])
+    _raco.call(this, val, [cb], DEFAULT_OPTS)
     return true
   } else if (isFunction(val)) {
     // Thunk
@@ -83,12 +89,6 @@ function _raco (genFn, args, opts) {
   var trycatch = true
   var ticking = false
   var callback = null
-
-  opts = xtend({
-    Promise: Promise,
-    prepend: false,
-    yieldable: null
-  }, opts)
 
   // pass raco next to generator function
   if (isFunction(args[args.length - 1])) callback = args.pop()
@@ -194,7 +194,7 @@ module.exports = (function factory (_opts) {
       if (isFunction(genFn)) throw new Error('Generator function required')
       else if (!isGenerator(genFn)) return factory(genFn)
     }
-    opts = xtend(_opts, opts, { Promise: null })
+    opts = xtend(DEFAULT_OPTS, _opts, opts, { Promise: null })
     return _raco.call(this, genFn, [], opts)
   }
 
@@ -209,7 +209,7 @@ module.exports = (function factory (_opts) {
     if (!isGeneratorFunction(genFn) && isFunction(genFn)) {
       throw new Error('Generator function required')
     }
-    opts = xtend(_opts, opts)
+    opts = xtend(DEFAULT_OPTS, _opts, opts)
     return function () {
       var args = Array.prototype.slice.call(arguments)
       return _raco.call(this, genFn, args, opts)
