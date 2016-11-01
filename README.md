@@ -156,7 +156,6 @@ By default, the following objects are considered yieldable:
 * Promise
 * Generator
 * Generator Function
-* Observable
 * Thunk
 
 It is also possible to override the default yieldable mapper. Use with caution:

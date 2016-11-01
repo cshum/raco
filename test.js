@@ -1,6 +1,5 @@
 var test = require('tape')
 var raco = require('./')
-var Observable = require('rx').Observable
 
 test('arguments and callback return', function (t) {
   t.plan(10)
@@ -146,7 +145,7 @@ test('resolve and reject', function (t) {
 })
 
 test('yieldable', function (t) {
-  t.plan(7)
+  t.plan(6)
 
   function * resolveGen (n) {
     return yield Promise.resolve(n)
@@ -173,20 +172,12 @@ test('yieldable', function (t) {
       return yield next(null, 167)
     }
   })
-  var observ = function () {
-    return Observable
-      .fromArray([1, 2])
-      .merge(Observable.fromPromise(Promise.resolve(3)))
-      .delay(10)
-      .toArray()
-  }
 
   raco(function * (next) {
     yield setTimeout(next, 0)
     t.equal(yield function * (next) {
       return yield next(null, 'foo')
     }, 'foo', 'yield generator function')
-    t.deepEqual(yield observ(), [1, 2, 3], 'yield observable')
     t.equal(yield instantCb(next), 1044, 'yield callback')
     t.equal(yield tryCatch(), 167, 'yield gnerator-promise')
     t.equal(yield tryCatchNext(), 167, 'yield next val')

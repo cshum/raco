@@ -31,9 +31,6 @@ function isGeneratorFunction (val) {
 function isPromise (val) {
   return val && isFunction(val.then)
 }
-function isObservable (val) {
-  return val && isFunction(val.subscribe)
-}
 function noop () {}
 
 /**
@@ -59,16 +56,6 @@ function yieldable (val, cb) {
   } else if (isFunction(val)) {
     // Thunk
     val(cb)
-    return true
-  } else if (isObservable(val)) {
-    // Observable
-    var dispose = val.subscribe(function (val) {
-      cb(null, val)
-      dispose.dispose()
-    }, function (err) {
-      cb(err || new Error())
-      dispose.dispose()
-    })
     return true
   } else {
     // Not yieldable
