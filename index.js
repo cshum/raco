@@ -3,6 +3,8 @@ var DEFAULT_OPTS = {
   prepend: false,
   yieldable: null
 }
+var hasOwnProperty = Object.prototype.hasOwnProperty
+var slice = Array.prototype.slice
 
 function xtend () {
   var i, l, key, source
@@ -10,7 +12,7 @@ function xtend () {
   for (i = 0, l = arguments.length; i < l; i++) {
     source = arguments[i]
     for (key in source) {
-      if (Object.prototype.hasOwnProperty.call(source, key)) {
+      if (hasOwnProperty.call(source, key)) {
         tar[key] = source[key]
       }
     }
@@ -18,7 +20,7 @@ function xtend () {
   return tar
 }
 function isFunction (val) {
-  return typeof val === 'function'
+  return val && typeof val === 'function'
 }
 function isGenerator (val) {
   return val && isFunction(val.next) && isFunction(val.throw)
@@ -40,7 +42,7 @@ function noop () {}
  * @param {function} cb - callback function
  * @returns {boolean} denote yieldable
  */
-function yieldable (val, cb) {
+function yieldable (val, cb, opts) {
   if (isPromise(val)) {
     // Promise
     val.then(function (value) {
@@ -51,7 +53,7 @@ function yieldable (val, cb) {
     return true
   } else if (isGeneratorFunction(val) || isGenerator(val)) {
     // Generator
-    _raco.call(this, val, [cb], DEFAULT_OPTS)
+    _raco.call(this, val, null, cb, opts)
     return true
   } else if (isFunction(val)) {
     // Thunk
@@ -70,19 +72,22 @@ function yieldable (val, cb) {
  * @param {array} args - arguments in real array form
  * @returns {promise} if no callback provided
  */
-function _raco (genFn, args, opts) {
+function _raco (genFn, args, callback, opts) {
   var self = this
   var done = false
   var trycatch = true
   var ticking = false
-  var callback = null
 
-  // pass raco next to generator function
-  if (isFunction(args[args.length - 1])) callback = args.pop()
   // prepend or append next arg
-  if (opts.prepend) args.unshift(next)
-  else args.push(next)
-
+  if (args) {
+    if (opts.prepend) {
+      args.unshift(next)
+    } else {
+      args.push(next)
+    }
+  } else {
+    args = [next]
+  }
   var iter = isGenerator(genFn) ? genFn : genFn.apply(self, args)
 
   /**
@@ -113,7 +118,7 @@ function _raco (genFn, args, opts) {
       }
       if (state && state.done) iter = null
       // resolve yieldable
-      var isYieldable = yieldable.call(self, state.value, step)
+      var isYieldable = yieldable.call(self, state.value, step, opts)
       if (!isYieldable && opts.yieldable) {
         isYieldable = opts.yieldable.call(self, state.value, step)
       }
@@ -129,7 +134,7 @@ function _raco (genFn, args, opts) {
    * @param {...*} val - callback value(s)
    */
   function next () {
-    var args = Array.prototype.slice.call(arguments)
+    var args = slice.call(arguments)
     if (!ticking) {
       ticking = true
       process.nextTick(function () {
@@ -182,7 +187,7 @@ module.exports = (function factory (_opts) {
       else if (!isGenerator(genFn)) return factory(genFn)
     }
     opts = xtend(DEFAULT_OPTS, _opts, opts, { Promise: null })
-    return _raco.call(this, genFn, [], opts)
+    return _raco.call(this, genFn, null, null, opts)
   }
 
   /**
@@ -193,13 +198,14 @@ module.exports = (function factory (_opts) {
    * @returns {function} regular function
    */
   raco.wrap = function (genFn, opts) {
-    if (!isGeneratorFunction(genFn) && isFunction(genFn)) {
+    if (!isGeneratorFunction(genFn)) {
       throw new Error('Generator function required')
     }
     opts = xtend(DEFAULT_OPTS, _opts, opts)
     return function () {
-      var args = Array.prototype.slice.call(arguments)
-      return _raco.call(this, genFn, args, opts)
+      var args = slice.call(arguments)
+      var cb = isFunction(args[args.length - 1]) ? args.pop() : null
+      return _raco.call(this, genFn, args, cb, opts)
     }
   }
 
@@ -211,10 +217,7 @@ module.exports = (function factory (_opts) {
    */
   raco.wrapAll = function (obj, opts) {
     for (var key in obj) {
-      if (
-        Object.prototype.hasOwnProperty.call(obj, key) &&
-        (isGeneratorFunction(obj[key]) || isGenerator(obj[key]))
-      ) {
+      if (isGeneratorFunction(obj[key])) {
         obj[key] = raco.wrap(obj[key], opts)
       }
     }
