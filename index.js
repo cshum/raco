@@ -84,12 +84,7 @@ function _raco (iter, args, callback, opts) {
    * @param {...*} val - callback value(s)
    */
   function step (err, val) {
-    if (!iter) {
-      if (callback) {
-        callback.apply(self, arguments)
-        callback = null
-      }
-    } else {
+    if (iter) {
       // generator step
       var state
       if (trycatch) {
@@ -111,6 +106,11 @@ function _raco (iter, args, callback, opts) {
       }
       // next if generator returned non-yieldable
       if (!isYieldable && !iter) next(null, state.value)
+    } else {
+      if (callback) {
+        callback.apply(self, arguments)
+        callback = null
+      }
     }
   }
 
@@ -132,19 +132,12 @@ function _raco (iter, args, callback, opts) {
       // error on multiple callbacks wthin one iteration
       iter = null
       step(new Error('Multiple callbacks within one iteration'))
-    } else {
-      // callback and return, pick callback value
-      iter = null
     }
   }
 
   // prepend or append next arg
   if (args) {
-    if (opts.prepend) {
-      args.unshift(next)
-    } else {
-      args.push(next)
-    }
+    opts.prepend ? args.unshift(next) : args.push(next)
   } else {
     args = [next]
   }
