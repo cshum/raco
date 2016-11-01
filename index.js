@@ -72,23 +72,10 @@ function yieldable (val, cb, opts) {
  * @param {array} args - arguments in real array form
  * @returns {promise} if no callback provided
  */
-function _raco (genFn, args, callback, opts) {
+function _raco (iter, args, callback, opts) {
   var self = this
-  var done = false
   var trycatch = true
   var ticking = false
-
-  // prepend or append next arg
-  if (args) {
-    if (opts.prepend) {
-      args.unshift(next)
-    } else {
-      args.push(next)
-    }
-  } else {
-    args = [next]
-  }
-  var iter = isGenerator(genFn) ? genFn : genFn.apply(self, args)
 
   /**
    * internal callback stepper
@@ -98,9 +85,9 @@ function _raco (genFn, args, callback, opts) {
    */
   function step (err, val) {
     if (!iter) {
-      if (!done) {
-        done = true
+      if (callback) {
         callback.apply(self, arguments)
+        callback = null
       }
     } else {
       // generator step
@@ -110,8 +97,8 @@ function _raco (genFn, args, callback, opts) {
           state = err ? iter.throw(err) : iter.next(val)
         } catch (err) {
           // catch err, break iteration
-          done = true
-          return callback.call(self, err)
+          iter = null
+          return step(err)
         }
       } else {
         state = err ? iter.throw(err) : iter.next(val)
@@ -144,12 +131,25 @@ function _raco (genFn, args, callback, opts) {
     } else if (iter) {
       // error on multiple callbacks wthin one iteration
       iter = null
-      step.call(self, new Error('Multiple callbacks within one iteration'))
+      step(new Error('Multiple callbacks within one iteration'))
     } else {
       // callback and return, pick callback value
       iter = null
     }
   }
+
+  // prepend or append next arg
+  if (args) {
+    if (opts.prepend) {
+      args.unshift(next)
+    } else {
+      args.push(next)
+    }
+  } else {
+    args = [next]
+  }
+
+  if (!isGenerator(iter)) iter = iter.apply(self, args)
 
   if (callback) {
     // callback mode
@@ -158,8 +158,8 @@ function _raco (genFn, args, callback, opts) {
     // return promise if callback not exists
     return new opts.Promise(function (resolve, reject) {
       callback = function (err, val) {
-        if (err) return reject(err)
-        resolve(val)
+        if (err) reject(err)
+        else resolve(val)
       }
       step()
     })
