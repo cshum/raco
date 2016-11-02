@@ -1,8 +1,3 @@
-var DEFAULT_OPTS = {
-  Promise: Promise,
-  prepend: false,
-  yieldable: null
-}
 var hasOwnProperty = Object.prototype.hasOwnProperty
 var slice = Array.prototype.slice
 
@@ -166,6 +161,11 @@ function _raco (iter, args, callback, opts) {
 }
 
 module.exports = (function factory (_opts) {
+  _opts = xtend({
+    Promise: Promise,
+    prepend: false,
+    yieldable: null
+  }, _opts)
   /**
    * raco resolver
    * returns factory if no arguments
@@ -179,7 +179,8 @@ module.exports = (function factory (_opts) {
       if (isFunction(genFn)) throw new Error('Generator function required')
       else if (!isGenerator(genFn)) return factory(genFn)
     }
-    opts = xtend(DEFAULT_OPTS, _opts, opts, { Promise: null })
+    opts = xtend(_opts, opts)
+    opts.Promise = null
     return _raco.call(this, genFn, null, null, opts)
   }
 
@@ -191,13 +192,11 @@ module.exports = (function factory (_opts) {
    * @returns {function} regular function
    */
   raco.wrap = function (genFn, opts) {
-    if (!isGeneratorFunction(genFn)) {
-      throw new Error('Generator function required')
-    }
-    opts = xtend(DEFAULT_OPTS, _opts, opts)
+    if (!isGeneratorFunction(genFn)) throw new Error('Generator function required')
+    opts = xtend(_opts, opts)
     return function () {
       var args = slice.call(arguments)
-      var cb = isFunction(args[args.length - 1]) ? args.pop() : null
+      var cb = args.length && isFunction(args[args.length - 1]) ? args.pop() : null
       return _raco.call(this, genFn, args, cb, opts)
     }
   }
