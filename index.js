@@ -131,11 +131,8 @@ function _raco (iter, args, callback, opts) {
   }
 
   // prepend or append next arg
-  if (args) {
-    opts.prepend ? args.unshift(next) : args.push(next)
-  } else {
-    args = [next]
-  }
+  if (args) opts.prepend ? args.unshift(next) : args.push(next)
+  else args = [next]
 
   if (!isGenerator(iter)) iter = iter.apply(self, args)
 
