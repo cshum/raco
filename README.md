@@ -29,9 +29,9 @@ raco(function * (next) {
   // yield promise
   console.log(yield Promise.resolve('foo')) // 'foo'
   try {
-    yield Promise.reject('boom')
+    yield Promise.reject(new Error('boom'))
   } catch (err) {
-    console.log(err) // 'boom'
+    console.log(err.message) // 'boom'
   }
 
   // yield callback
@@ -53,13 +53,13 @@ until `next(err, val)` being invoked by callback.
 
 ```js
 raco(function * (next) {
-  var res = yield setTimeout(function () { 
+  var res = yield setTimeout(() => { 
     next(null, 'foo')
   }, 100)
   console.log(res) // 'foo'
 
   try {
-    yield setTimeout(function () { 
+    yield setTimeout(() => { 
       next(new Error('boom'))
     }, 100)
   } catch (err) {
@@ -167,7 +167,7 @@ var raco = require('raco')({
   yieldable: (val, cb) => {
     // map array to Promise.all
     if (Array.isArray(val)) {
-      Promise.all(val).then(function (res) {
+      Promise.all(val).then((res) => {
         cb(null, res)
       }, cb)
       return true // acknowledge yieldable
