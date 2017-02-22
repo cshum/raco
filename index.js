@@ -168,7 +168,7 @@ module.exports = (function factory (_opts) {
    * returns factory if no arguments
    *
    * @param {function} genFn - generator function or factory options
-   * @param {...*} args - optional arguments
+   * @param {object} [opts] - options object
    * @returns {promise} if no callback provided
    */
   function raco (genFn, opts) {
@@ -186,6 +186,7 @@ module.exports = (function factory (_opts) {
    * optionally accepts callback or returns a promise.
    *
    * @param {function} genFn - generator function
+   * @param {object} [opts] - options object
    * @returns {function} regular function
    */
   raco.wrap = function (genFn, opts) {
@@ -202,6 +203,7 @@ module.exports = (function factory (_opts) {
    * wraps generator function properties of object
    *
    * @param {object} obj - object to raco.wrap
+   * @param {object} [opts] - options object
    * @returns {object} original object
    */
   raco.wrapAll = function (obj, opts) {
