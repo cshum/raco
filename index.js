@@ -207,7 +207,8 @@ module.exports = (function factory (_opts) {
    * @returns {object} original object
    */
   raco.wrapAll = function (obj, opts) {
-    for (var key in obj) {
+    var props = Object.getOwnPropertyNames(obj)
+    for (var key of props) {
       if (isGeneratorFunction(obj[key])) {
         obj[key] = raco.wrap(obj[key], opts)
       }
