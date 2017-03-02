@@ -1,3 +1,4 @@
+'use strict'
 var test = require('tape')
 var raco = require('./')
 
@@ -219,7 +220,7 @@ test('override yieldable', function (t) {
 })
 
 test('wrapAll', function (t) {
-  t.plan(6)
+  t.plan(7)
 
   var fn = function () {}
   var gen = (function * () {})()
@@ -227,18 +228,23 @@ test('wrapAll', function (t) {
     test: 'foo',
     fn: fn,
     gen: gen,
-    genFn: function * () {
-      try {
-        yield Promise.reject('booom')
-      } catch (e) {
-        t.equal(e, 'booom', 'correct yield')
-      }
+    genFn: function * (next) {
+      t.equal(typeof next, 'function', 'raco next param')
     }
   }
+  class C {
+    fn () {}
+    * genFn (next) {
+      t.equal(typeof next, 'function', 'raco next param')
+    }
+  }
+  raco.wrapAll(C.prototype)
+  var c = new C()
   t.equal(raco.wrapAll(obj), obj, 'mutuable')
   t.equal(obj.test, 'foo', 'ignore non raco')
   t.equal(obj.fn, fn, 'ignore non raco')
   t.notOk(obj.gen === gen, 'wrap generator')
   t.notOk(obj.genFn === fn, 'wrap generator function')
+  c.genFn().catch(t.error)
   obj.genFn().catch(t.error)
 })
