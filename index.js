@@ -1,3 +1,4 @@
+'use strict'
 var hasOwnProperty = Object.prototype.hasOwnProperty
 var slice = Array.prototype.slice
 
