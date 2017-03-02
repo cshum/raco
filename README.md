@@ -9,8 +9,8 @@ npm install raco
 ```
 
 Many existing flow-control libraries such as [co](https://github.com/tj/co), assume promises to be the lowest denominator of async handling.
-Callback function requires promisify patch to be compatible, 
-which creates unnecessary complication. 
+Callback function requires promisify patch to be compatible,
+which creates unnecessary complication.
 
 In raco, both callbacks and promises are yieldable.
 Resulting function can be called by both callbacks and promises.
@@ -36,7 +36,7 @@ raco(function * (next) {
 
   // yield callback
   yield setTimeout(next, 1000) // delay 1 second
-  var data = yield fs.readFile('./data', next)  
+  var data = yield fs.readFile('./data', next)
   yield mkdirp('/tmp/foo/bar', next)
   yield pump(
     fs.createReadStream('./foo'),
@@ -46,20 +46,20 @@ raco(function * (next) {
 })
 ```
 
-Yieldable callback works by supplying an additional `next` argument. 
-Yielding non-yieldable value pauses the current generator, 
+Yieldable callback works by supplying an additional `next` argument.
+Yielding non-yieldable value pauses the current generator,
 until `next(err, val)` being invoked by callback.
 `val` passes back to yielded value, or `throw` if `err` exists.
 
 ```js
 raco(function * (next) {
-  var res = yield setTimeout(() => { 
+  var res = yield setTimeout(() => {
     next(null, 'foo')
   }, 100)
   console.log(res) // 'foo'
 
   try {
-    yield setTimeout(() => { 
+    yield setTimeout(() => {
       next(new Error('boom'))
     }, 100)
   } catch (err) {
@@ -88,13 +88,13 @@ fn(167, 689) // use with promise
 
 ### `raco.wrapAll(obj, [opts])`
 
-Wraps generator function properties of object.
+Wraps generator methods of class or object.
 
 ```js
-function App () { }
-
-App.prototype.fn = function * (next) {...}
-App.prototype.fn2 = function * (next) {...}
+class App {
+  * fn (next) { ... }
+  * fn2 (next) { ... }
+}
 
 // wrap prototype object
 raco.wrapAll(App.prototype)
@@ -110,7 +110,7 @@ app.fn2().then(...).catch(...)
 Calling raco with options object makes a factory function with a set of available options:
 
 ```js
-var raco = require('raco')({ 
+var raco = require('raco')({
   Promise: null, // disable Promise
   yieldable: function (val, cb) {
     // custom yieldable
@@ -130,7 +130,7 @@ var raco = require('raco')({ Promise: require('bluebird') })
 
 #### `opts.prepend`
 
-By default, `next(err, val)` function appends to arguments `fn* (args..., next)`. 
+By default, `next(err, val)` function appends to arguments `fn* (args..., next)`.
 If `opts.prepend` set to `true`, generator function is called with `fn* (next, args...)`.
 This can be useful for functions that accept varying numbers of arguments.
 
@@ -153,12 +153,14 @@ fn(1, 6).then((val) => {
 #### `opts.yieldable`
 
 By default, the following objects are considered yieldable:
+
 * Promise
 * Generator
 * Generator Function
 * Thunk
 
 It is also possible to override the default yieldable mapper. Use with caution:
+
 * Takes the yielded value, returns `true` to acknowledge yieldable.
 * Callback`cb(err, val)` to resolve the yieldable.
 
