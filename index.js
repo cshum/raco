@@ -1,34 +1,25 @@
 'use strict'
-var hasOwnProperty = Object.prototype.hasOwnProperty
+
 var slice = Array.prototype.slice
 
-function xtend () {
-  var i, l, key, source
-  var tar = {}
-  for (i = 0, l = arguments.length; i < l; i++) {
-    source = arguments[i]
-    for (key in source) {
-      if (hasOwnProperty.call(source, key)) {
-        tar[key] = source[key]
-      }
-    }
-  }
-  return tar
-}
 function isFunction (val) {
   return val && typeof val === 'function'
 }
+
 function isGenerator (val) {
   return val && isFunction(val.next) && isFunction(val.throw)
 }
+
 function isGeneratorFunction (val) {
   if (!val || !val.constructor) return false
   if (val.constructor.name === 'GeneratorFunction' || val.constructor.displayName === 'GeneratorFunction') return true
   return isGenerator(val.constructor.prototype)
 }
+
 function isPromise (val) {
   return val && isFunction(val.then)
 }
+
 function noop () {}
 
 /**
@@ -159,7 +150,7 @@ function _raco (iter, args, callback, opts) {
 }
 
 module.exports = (function factory (_opts) {
-  _opts = xtend({
+  _opts = Object.assign({
     Promise: Promise,
     prepend: false,
     yieldable: null
@@ -177,7 +168,7 @@ module.exports = (function factory (_opts) {
       if (isFunction(genFn)) throw new Error('Generator function required')
       else if (!isGenerator(genFn)) return factory(genFn)
     }
-    opts = xtend(_opts, opts)
+    opts = Object.assign({}, _opts, opts)
     opts.Promise = null
     return _raco.call(this, genFn, null, null, opts)
   }
@@ -192,7 +183,7 @@ module.exports = (function factory (_opts) {
    */
   raco.wrap = function (genFn, opts) {
     if (!isGeneratorFunction(genFn)) throw new Error('Generator function required')
-    opts = xtend(_opts, opts)
+    opts = Object.assign({}, _opts, opts)
     return function () {
       var args = slice.call(arguments)
       var cb = args.length && isFunction(args[args.length - 1]) ? args.pop() : null
