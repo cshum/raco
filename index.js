@@ -63,6 +63,7 @@ function _raco (iter, args, callback, opts) {
   var self = this
   var trycatch = true
   var ticking = false
+  var nothrow = !!opts.nothrow
 
   /**
    * internal callback stepper
@@ -76,14 +77,16 @@ function _raco (iter, args, callback, opts) {
       var state
       if (trycatch) {
         try {
-          state = err ? iter.throw(err) : iter.next(val)
+          if (nothrow) state = iter.next(slice.call(arguments))
+          else state = err ? iter.throw(err) : iter.next(val)
         } catch (err) {
           // catch err, break iteration
           iter = null
           return step(err)
         }
       } else {
-        state = err ? iter.throw(err) : iter.next(val)
+        if (nothrow) state = iter.next(slice.call(arguments))
+        else state = err ? iter.throw(err) : iter.next(val)
       }
       if (state && state.done) iter = null
       // resolve yieldable
@@ -153,6 +156,7 @@ module.exports = (function factory (_opts) {
   _opts = Object.assign({
     Promise: Promise,
     prepend: false,
+    nothrow: false,
     yieldable: null
   }, _opts)
   /**

@@ -146,7 +146,7 @@ test('resolve and reject', function (t) {
 })
 
 test('yieldable', function (t) {
-  t.plan(6)
+  t.plan(13)
 
   function * resolveGen (n) {
     return yield Promise.resolve(n)
@@ -165,6 +165,7 @@ test('yieldable', function (t) {
       return yield resolveGen(167)
     }
   })
+
   var tryCatchNext = raco.wrap(function * (next) {
     try {
       return yield next(689)
@@ -183,6 +184,13 @@ test('yieldable', function (t) {
     t.equal(yield tryCatch(), 167, 'yield gnerator-promise')
     t.equal(yield tryCatchNext(), 167, 'yield next val')
   })
+  raco(function * (next) {
+    t.deepEqual(yield instantCb(next), [null, 1044], 'yield callback nothrow')
+    t.deepEqual(yield tryCatch(), [null, 167], 'yield gnerator-promise')
+    t.deepEqual(yield tryCatchNext(), [null, 167], 'yield next val')
+    t.deepEqual(yield rejectFn(689), [689], 'nothrow reject args')
+    t.deepEqual(yield setTimeout(() => next([1], 2, 'c')), [[1], 2, 'c'], 'yield next args')
+  }, { nothrow: true })
 })
 
 test('override yieldable', function (t) {
