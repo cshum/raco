@@ -118,9 +118,11 @@ function _raco (iter, args, callback, opts) {
       } else {
         // need next tick if not defered
         process.nextTick(function () {
-          if (!isYieldable) step.apply(self, args)
+          step.apply(self, args)
         })
       }
+    } else {
+      step(new Error('Callback on yieldable is prohibited'))
     }
   }
 

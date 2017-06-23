@@ -245,20 +245,21 @@ test('wrapAll', function (t) {
 })
 
 test('ignore callback for yieldable', function (t) {
-  var n = 5
-  t.plan(n + 2)
+  t.plan(1)
   function fn (val, cb) {
     return new Promise((resolve, reject) => {
-      cb(null, 167)
-      resolve(val)
+      process.nextTick(() => {
+        cb(null, 167)
+        resolve(val)
+      })
     })
   }
-
+  var n = 5
   raco(function * (next) {
-    for (var i = 0; i < n; i++) {
-      t.equal(yield fn(i, next), i, 'should take yieldable val')
+    try {
+      for (var i = 0; i < n; i++) yield fn(i, next)
+    } catch (err) {
+      t.equal(err.message, 'Callback on yieldable is prohibited')
     }
-    t.equal(yield (next) => next(null, 123), 123, 'should take yieldable val')
-    t.equal(yield Promise.resolve(168), 168, 'should take yieldable val')
   })
 })
