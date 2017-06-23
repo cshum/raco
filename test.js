@@ -64,24 +64,11 @@ test('prepend next arg', function (t) {
 })
 
 test('multiple callbacks handling', function (t) {
-  t.plan(4)
-
+  t.plan(2)
   raco.wrap(function * (next) {
     next(null, 'foo')
     next(null, 'bar')
-    return true
-  })(function (err, val) {
-    t.equal(
-      err.message,
-      'Multiple callbacks within one iteration',
-      'next twice error'
-    )
-    t.error(val)
-  })
-
-  raco.wrap(function * (next) {
-    next(null, 'foo')
-    return 'bar'
+    return 'boom'
   })(function (err, val) {
     t.error(err)
     t.equal(val, 'foo', 'return first callback on return')
@@ -255,4 +242,25 @@ test('wrapAll', function (t) {
   t.notOk(obj.genFn === fn, 'wrap generator function')
   c.genFn().catch(t.error)
   obj.genFn().catch(t.error)
+})
+
+test('ignore callback for yieldable', function (t) {
+  var n = 5
+  t.plan(n + 2)
+  function fn (val, cb) {
+    return new Promise((resolve, reject) => {
+      process.nextTick(() => {
+        cb(null, 167)
+        resolve(val)
+      })
+    })
+  }
+
+  raco(function * (next) {
+    for (var i = 0; i < n; i++) {
+      t.equal(yield fn(i, next), i, 'should take yieldable val')
+    }
+    t.equal(yield (next) => next(null, 123), 123, 'should take yieldable val')
+    t.equal(yield Promise.resolve(168), 168, 'should take yieldable val')
+  })
 })

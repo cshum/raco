@@ -62,9 +62,8 @@ function yieldable (val, cb, opts) {
 function _raco (iter, args, callback, opts) {
   var self = this
   var trycatch = true
-  var ticking = false
+  var isYieldable = true
   var nothrow = !!opts.nothrow
-
   /**
    * internal callback stepper
    *
@@ -75,6 +74,7 @@ function _raco (iter, args, callback, opts) {
     if (iter) {
       // generator step
       var state
+      isYieldable = false
       if (trycatch) {
         try {
           if (nothrow) state = iter.next(slice.call(arguments))
@@ -90,7 +90,7 @@ function _raco (iter, args, callback, opts) {
       }
       if (state && state.done) iter = null
       // resolve yieldable
-      var isYieldable = yieldable.call(self, state.value, step, opts)
+      isYieldable = yieldable.call(self, state.value, step, opts)
       if (!isYieldable && opts.yieldable) {
         isYieldable = opts.yieldable.call(self, state.value, step)
       }
@@ -103,7 +103,6 @@ function _raco (iter, args, callback, opts) {
       }
     }
   }
-
   /**
    * next, callback stepper with nextTick
    *
@@ -112,16 +111,11 @@ function _raco (iter, args, callback, opts) {
    */
   function next () {
     var args = slice.call(arguments)
-    if (!ticking) {
-      ticking = true
+    if (!isYieldable) {
+      // only handle callback if not yieldable
       process.nextTick(function () {
-        ticking = false
         step.apply(self, args)
       })
-    } else if (iter) {
-      // error on multiple callbacks wthin one iteration
-      iter = null
-      step(new Error('Multiple callbacks within one iteration'))
     }
   }
 
