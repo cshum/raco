@@ -118,7 +118,7 @@ function _raco (iter, args, callback, opts) {
       } else {
         // need next tick if not defered
         process.nextTick(function () {
-          step.apply(self, args)
+          if (!isYieldable) step.apply(self, args)
         })
       }
     }
@@ -187,10 +187,17 @@ module.exports = (function factory (_opts) {
   raco.wrap = function (genFn, opts) {
     if (!isGeneratorFunction(genFn)) throw new Error('Generator function required')
     opts = Object.assign({}, _opts, opts)
-    return function () {
+    function fn () {
       var args = slice.call(arguments)
       var cb = args.length && isFunction(args[args.length - 1]) ? args.pop() : null
       return _raco.call(this, genFn, args, cb, opts)
+    }
+    switch (genFn.length) {
+      case 1: return function (a) { return fn.apply(this, arguments) }
+      case 2: return function (a, b) { return fn.apply(this, arguments) }
+      case 3: return function (a, b, c) { return fn.apply(this, arguments) }
+      case 4: return function (a, b, c, d) { return fn.apply(this, arguments) }
+      default: return fn
     }
   }
 

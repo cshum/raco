@@ -249,10 +249,8 @@ test('ignore callback for yieldable', function (t) {
   t.plan(n + 2)
   function fn (val, cb) {
     return new Promise((resolve, reject) => {
-      process.nextTick(() => {
-        cb(null, 167)
-        resolve(val)
-      })
+      cb(null, 167)
+      resolve(val)
     })
   }
 
