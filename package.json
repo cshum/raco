@@ -1,6 +1,6 @@
 {
   "name": "raco",
-  "version": "3.2.5",
+  "version": "3.2.6",
   "description": "Generator based flow-control that supports both callback and promise",
   "scripts": {
     "test": "standard && tape test.js"
