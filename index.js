@@ -63,6 +63,7 @@ function _raco (iter, args, callback, opts) {
   var self = this
   var trycatch = true
   var isYieldable = true
+  var yielded = false
   var nothrow = !!opts.nothrow
   /**
    * internal callback stepper
@@ -73,15 +74,15 @@ function _raco (iter, args, callback, opts) {
   function step (err, val) {
     if (iter) {
       // generator step
-      var state
+      yielded = false
       isYieldable = false
+      var state
       if (trycatch) {
         try {
           if (nothrow) state = iter.next(slice.call(arguments))
           else state = err ? iter.throw(err) : iter.next(val)
         } catch (err) {
-          // catch err, break iteration
-          iter = null
+          iter = null // catch err, break iteration
           return step(err)
         }
       } else {
@@ -89,18 +90,16 @@ function _raco (iter, args, callback, opts) {
         else state = err ? iter.throw(err) : iter.next(val)
       }
       if (state && state.done) iter = null
-      // resolve yieldable
+      yielded = true
       isYieldable = yieldable.call(self, state.value, step, opts)
       if (!isYieldable && opts.yieldable) {
         isYieldable = opts.yieldable.call(self, state.value, step)
       }
       // next if generator returned non-yieldable
       if (!isYieldable && !iter) next(null, state.value)
-    } else {
-      if (callback) {
-        callback.apply(self, arguments)
-        callback = null
-      }
+    } else if (callback) {
+      callback.apply(self, arguments)
+      callback = null
     }
   }
   /**
@@ -113,9 +112,15 @@ function _raco (iter, args, callback, opts) {
     var args = slice.call(arguments)
     if (!isYieldable) {
       // only handle callback if not yieldable
-      process.nextTick(function () {
+      if (iter && yielded) {
+        // no need defer when yielded
         step.apply(self, args)
-      })
+      } else {
+        // need next tick if not defered
+        process.nextTick(function () {
+          step.apply(self, args)
+        })
+      }
     }
   }
 
