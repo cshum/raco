@@ -199,6 +199,7 @@ module.exports = (function factory (_opts) {
       case 2: return function (a, b) { return fn.apply(this, arguments) }
       case 3: return function (a, b, c) { return fn.apply(this, arguments) }
       case 4: return function (a, b, c, d) { return fn.apply(this, arguments) }
+      case 5: return function (a, b, c, d, e) { return fn.apply(this, arguments) }
       default: return fn
     }
   }

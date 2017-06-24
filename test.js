@@ -3,7 +3,7 @@ var test = require('tape')
 var raco = require('./')
 
 test('arguments and callback return', function (t) {
-  t.plan(10)
+  t.plan(11)
 
   var fn = raco.wrap(function * (num, str, next) {
     t.equal(num, 167, 'arguemnt')
@@ -12,6 +12,7 @@ test('arguments and callback return', function (t) {
     next(null, 'foo', 'bar') // should return
     return 'boom' // should not return
   })
+  t.equal(fn.length, 3, 'fn arg length')
 
   // callback
   t.notOk(fn(167, '167', function (err, res) {
